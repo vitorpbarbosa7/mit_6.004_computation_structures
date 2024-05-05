@@ -1,0 +1,21 @@
+* 8 clocks, arranged as 8-bit counter
+* start with 10ns period
+Vclk1 clk1 0 pulse(0,3.3,4.9ns,.1ns,.1ns,4.9ns)
+Vclk2 clk2 0 pulse(0,3.3,9.9ns,.1ns,.1ns,9.9ns)
+Vclk3 clk3 0 pulse(0,3.3,19.9ns,.1ns,.1ns,19.9ns)
+Vclk4 clk4 0 pulse(0,3.3,39.9ns,.1ns,.1ns,39.9ns)
+Vclk5 clk5 0 pulse(0,3.3,79.9ns,.1ns,.1ns,79.9ns)
+Vclk6 clk6 0 pulse(0,3.3,159.9ns,.1ns,.1ns,159.9ns)
+Vclk7 clk7 0 pulse(0,3.3,319.9ns,.1ns,.1ns,319.9ns)
+Vclk8 clk8 0 pulse(0,3.3,639.9ns,.1ns,.1ns,639.9ns)
+
+*.tran 1280ns
+*.plot clk1
+*.plot clk2
+*.plot clk3
+*.plot clk4
+*.plot clk5
+*.plot clk6
+*.plot clk7
+*.plot clk8
+*.plot clk[8:1]

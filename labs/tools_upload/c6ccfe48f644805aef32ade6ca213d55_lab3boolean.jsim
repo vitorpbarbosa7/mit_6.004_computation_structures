@@ -1,0 +1,57 @@
+.checkoff "" "Lab #3: boolean" 0
+
+.verify boole[31:0] periodic(9.9E-8,1.0000000000000001E-7)
++ 0x00000000
++ 0x00000000
++ 0x00000000
++ 0xFFFFFFFF
++ 0x00000000
++ 0xFFFFFFFF
++ 0xFFFFFFFF
++ 0xFFFFFFFF
++ 0x00000000
++ 0xFFFFFFFF
++ 0xFFFFFFFF
++ 0x00000000
++ 0x00000000
++ 0xFFFFFFFF
++ 0x00000000
++ 0xFFFFFFFF
+
+* instantiate boolean unit
+Xboole alufn[3:0] a[31:0] b[31:0] boole[31:0] boole32
+
+* Generate sample 32-bit inputs for A and B and try different control settings
+
+Wa a[31:0] nrz(0,3.3,100n,0n,.1n,.1n)
+// test logic operations
++ 0x00000000 0xFFFFFFFF 0x00000000 0xFFFFFFFF
++ 0x00000000 0xFFFFFFFF 0x00000000 0xFFFFFFFF
++ 0x00000000 0xFFFFFFFF 0x00000000 0xFFFFFFFF
++ 0x00000000 0xFFFFFFFF 0x00000000 0xFFFFFFFF
+
+Wb b[31:0] nrz(0,3.3,100n,0n,.1n,.1n)
+// test logic operations
++ 0x00000000 0x00000000 0xFFFFFFFF 0xFFFFFFFF
++ 0x00000000 0x00000000 0xFFFFFFFF 0xFFFFFFFF
++ 0x00000000 0x00000000 0xFFFFFFFF 0xFFFFFFFF
++ 0x00000000 0x00000000 0xFFFFFFFF 0xFFFFFFFF
+
+Wc alufn[3:0] nrz(0,3.3,100n,0n,.1n,.1n) 
++ 0x8 0x8 0x8 0x8	// AND
++ 0xE 0xE 0xE 0xE	// OR
++ 0x6 0x6 0x6 0x6	// XOR
++ 0xA 0xA 0xA 0xA	// A
+
+* Run the simulation long enough to test all input values
+.tran 1600n
+
+* Some useful plots... you can plot additional signals by specifying
+* the appropriate .plot commands in your main netlist file.
+
+.plotdef op
++ ??? ??? ??? ??? ??? ??? XOR ??? AND ??? A   ??? ??? ??? OR  ???
+.plot L(a[31:0])
+.plot L(b[31:0])
+.plot op(alufn[3:0])
+.plot L(boole[31:0])
