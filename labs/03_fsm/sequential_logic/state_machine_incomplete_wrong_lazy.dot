@@ -1,0 +1,22 @@
+digraph fsm {
+    // Define states
+    sa [label="sa"];
+    sf [label="sf"];
+    sc [label="sc"];
+    sb [label="sb"];
+    sd [label="sd"];
+    se [label="se"];
+
+    // Define transitions
+    sa -> sa [label="0, 01"];
+    sa -> sb [label="1, 01"];
+    sf -> sa [label="0, 10"];
+    sf -> sf [label = "1, 10"];
+    sb -> sc [label="0, 00"];
+    sb -> sd [label="1, 00"];
+    sc -> sa [label="0, 11"];
+    sd -> se [label="0, 00"];
+    sd -> sc [label="1, 00"];
+    se -> sc [label="0, 00"];
+    se -> sb [label="1, 00"];
+}

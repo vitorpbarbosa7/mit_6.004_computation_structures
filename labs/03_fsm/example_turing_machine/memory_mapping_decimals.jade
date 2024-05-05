@@ -1,0 +1,36 @@
+0b_000_0     0b_000_01
+0b_000_1     0b_001_01
+0b_101_0     0b_000_10
+0b_101_1     0b_101_10
+0b_010_0     0b_011_11
+0b_010_1     0b_100_11
+0b_001_0     0b_011_00
+0b_001_1     0b_010_00
+0b_011_0     0b_100_00
+0b_011_1     0b_101_00
+0b_100_0     0b_101_00
+0b_100_1     0b_010_00
+  
+  
+0b110_0     0b_000_01
+0b110_1     0b_000_01
+0b111_0     0b_000_01
+0b111_1     0b_000_01
+
+
+sa = 000
+sf = 101
+sc = 010
+sb = 001
+sd = 011
+se = 100
+
+rom component:
+input = 0b_state_in
+output = 0b_nextstate_out
+
+state = 3 bits
+in = 1 bit least significant bit 
+
+nextstate = 3 bits
+out = 2 bits (u, v) least significant bits
