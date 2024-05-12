@@ -34,9 +34,7 @@ action s1 ) s2        0 l
 action s2 - *halt*    - r
 action s1 - *halt*    - r
 
-
 action s2 ) s1        1 l
-
 
 action s1 0 *halt*    1 l
 
