@@ -1,0 +1,54 @@
+.include "beta.uasm"
+
+        BR(STEP1)   // start execution with Step 1
+
+        // the array to be sorted
+        A:      LONG(10) LONG(56) LONG(27) LONG(69) LONG(73) LONG(99)
+                LONG(44) LONG(36) LONG(10) LONG(72) LONG(71) LONG(1)
+
+ALEN = (. - A)/4    // determine number of elements in A
+
+// Please enter your code for each of the steps below...
+cmpi = R10
+current = R3
+prev = R4
+cmpel = R7
+pointerA = R2
+
+STEP1:
+	i = R0
+STEP2:
+	swapped = R1
+STEP3:
+    // increment i 
+	ADDC(R31, 1, i)
+	// if i is greater than or equal to the length of the array (ALEN)
+	//so go to step5
+	CMPLE(ALEN,i,cmpi)
+	BNE(cmpi,STEP5)
+	// Otherwise continue to next step normally
+STEP4:
+	// If A[i-1] <= A[i] go to step 3 (because this part is already sorted)
+	// those next trhee lines allow us for the offset inside the A array itself
+	MULC(i,4,pointerA)
+	LD(pointerA, A, current)
+	LD(pointerA, A-4, prev)
+	// now compare current and prev
+	// if prev <= current, then cmpel = 1
+	CMPLE(prev, current, cmpel)
+	BNE(cmpel, STEP3)
+	
+	// else:
+	// otherwhise swap A[i-1] with A[i]
+	ST(current, A-4, R2)
+	ST(prev, A, R2)
+	
+        ...
+STEP5:
+        ...
+
+// When step 5 is complete, execution continues with the
+// checkoff code.  You must include this code in order to
+// receive credit for completing the problem.
+.include "checkoff.uasm"
+

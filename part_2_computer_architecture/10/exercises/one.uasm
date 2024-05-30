@@ -1,0 +1,11 @@
+. = 0 
+     LD(R31, c, R0) 
+     ADDC(R0, b, R0)
+
+     HALT()    
+
+     . = 0x200
+a:   LONG(0x100)
+b:   LONG(0x200)
+c:   LONG(0x300)
+	
