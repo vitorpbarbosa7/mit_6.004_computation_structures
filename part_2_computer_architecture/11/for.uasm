@@ -1,0 +1,33 @@
+.include "beta.uasm"
+
+	. = 0x0000
+	BR(_start)
+
+	sum: LONG(0)
+	a: LONG(1) LONG(2) LONG(3) LONG(4) LONG(5)
+	i: LONG(0)
+	max: LONG(5)
+	
+. = 0x0100
+  _start:
+  
+  LD(sum, r0)
+  LD(i, r1)
+  CMOVE(5, r5)
+  
+  BR(_test)
+  
+  _loop:
+  	MULC(r1, 4, r4)
+	LD(r4, a, r7)
+  	ADD(r0, r7, r0)
+	
+	ADDC(r1, 1, r1)
+	
+  _test:
+  	CMPLT(r1,r5, r6)
+	BT(r6,_loop)
+
+  HALT()
+
+

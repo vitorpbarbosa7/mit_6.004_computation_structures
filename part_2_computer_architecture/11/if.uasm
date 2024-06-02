@@ -1,0 +1,29 @@
+
+// if (b <=10) c=3;
+
+.include "beta.uasm"
+
+	. = 0x0000
+	BR(_start)
+	
+	b: 11
+	c: 0
+
+	
+. = 0x00c
+  _start:
+  
+	CMOVE(10, r10)
+	LD(b, r1)
+	CMPLE(r1,r10,r2)
+	BEQ(r2, _else)
+
+  _if:
+    CMOVE(3, r3)
+	ST(r3, c)
+	
+  _else:
+
+  HALT()
+
+

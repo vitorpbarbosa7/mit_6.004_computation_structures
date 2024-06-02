@@ -1,0 +1,42 @@
+| if (b > c) b = b + 1;
+| else {
+|   temp = c;    // interchange b and c
+|   c = b;
+|   b = temp;
+| }
+
+.include "beta.uasm"
+
+	. = 0x0000
+	BR(_start)
+	
+	b: LONG(2)
+	c: LONG(3)
+
+	
+. = 0x0010
+  _start:
+	LD(b, r0)
+	LD(c,r1)
+	CMPLT(r1,r0, r2)
+	BF(r2, _else)
+ 
+  _if:
+  	ADDC(r0, 1, r0)
+	ST(r0, b)
+	ST(r1, c)
+	BR(_end)
+
+  _else:
+   	ST(r0,c)
+	ST(r1,b)
+
+
+ _end: 
+
+
+	
+
+  HALT()
+
+

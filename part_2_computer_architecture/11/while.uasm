@@ -1,0 +1,38 @@
+// while (exp > 0) {
+//   b = b*b;
+//   exp = exp - 1;
+// }
+
+.include "beta.uasm"
+  . = 0x0000
+  BR(_start)
+
+	b: LONG(2)
+	exp: LONG(3)
+	
+. = 0x0010
+  _start:
+  
+  LD(b, r0)
+  LD(exp, r2)
+  
+  BR(_test)
+  
+  _loop:
+    LD(b, r0)
+    LD(exp, r2)
+  	MUL(r0,r0,r0)
+	SUBC(r2,1,r2)
+	ST(r0,b)
+	ST(r2,exp)
+  
+  _test:
+  	LD(exp,r2)
+	CMOVE(0, r5)
+	CMOVE(0, r3)
+  	CMPLT(r5,r2, r3)
+	BT(r3,_loop)
+
+  HALT()
+
+
