@@ -1,2 +1,12 @@
 *.html linguist-vendored
 
+# override for .jade files
+*.jade linguist-language=Jade
+
+# Override for .uasm files
+*.uasm linguist-language=Assembly
+
+# Override for .json files
+*.json linguist-language=Jade_JSON
+
+
