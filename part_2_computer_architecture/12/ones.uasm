@@ -1,0 +1,55 @@
+.include "beta.uasm"
+
+	. = 0x0000
+	BR(_start)
+	
+	x: 0b00101	
+
+. = 0x01C
+  _start:
+    LD(x, R1)  // Load x into R1
+    PUSH(R1)   // Push x onto the stack
+    CALL(ones) // Call the ones procedure 
+    POP(R1)   // Restore x from the stack
+    HALT()	
+	
+  ones:
+  	PUSH(LP)
+	PUSH(BP)
+	MOVE(SP,BP)
+	ALLOCATE(2)
+    
+	PUSH(R1)
+	LD(BP, -12, R0) // LOAD X INTO R0
+	ANDC(R0, 1, R1) // bitwise 
+	ST(R1,0,BP) // Mem[ 0 + REG(BP)] <-  REG[R1]
+	SHRC(R0,1,R1)
+	ST(R1, 4, BP) // MEM[REG[BP] + 4] <- REG[R1]
+	BEQ(R0, labl) // if R0 == 0 -> branch
+	LD(BP, 4, R1) // Reg[R1] <- Mem[ Reg[BP] + 4] - LOAD rest
+	
+	// this is already calling the procedure, because the caller pushs into the 
+	// stack the arguments to the callee load it using the BP
+	PUSH(R1) // put into the stack the r1 of the rest value
+	BR(ones, LP) // the ones will be able to access this rest when enters
+	
+	
+	// Once finished all recursive calls to the procedure, the return will really be added to 
+	// the lowbit of that stack frame called in the activation record
+	DEALLOCATE(1)
+	LD(BP, 0, R1) // load the lowbit
+	ADD(R0, R1, R0) // add the rest (r0), from the returns, to the r1 (lowbit)
+
+
+  labl: 
+  	POP(R1) // Reg[R1] will receive back from the stack its value
+	MOVE(BP, SP) // It is like a deallocation of stack, going back the SP pointer 
+	// All from this point will be ignored, so we're goint to the return, to previous
+	// stack frames
+	
+	// Also loading register values from previous stack frames
+	POP(BP) // Previously Base Pointer in the stack is loaded back into the register
+	POP(LP) // Previousy Linkage Pointer in the stack is loaded back into the regsiter
+	// Once our LP register is loaded, we go back to the calleer next instruciton
+	JMP(LP)
+
