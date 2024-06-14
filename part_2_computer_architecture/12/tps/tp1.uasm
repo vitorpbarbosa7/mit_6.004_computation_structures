@@ -1,0 +1,58 @@
+quicksort: 
+      PUSH(LP)
+      PUSH(BP) 
+      MOVE(SP, BP) 
+      PUSH(R1) 
+      PUSH(R2) 
+      PUSH(R3) 
+      PUSH(R4)
+
+      LD(BP, -12, R1) 
+      LD(BP, -16, R2) 
+aa:   LD(BP, -20, R3)
+
+      CMPLT(R2, R3, R0) 
+      BF(R0, qx)
+
+      PUSH(R3)
+      PUSH(R2)
+      PUSH(R1) 
+      BR(partition, LP) 
+      DEALLOCATE(3)
+      MOVE(R0, R4)
+xx:
+      SUBC(R4, 1, R0)
+      PUSH(R0)
+      PUSH(R2)
+      PUSH(R1) 
+      BR(quicksort, LP) 
+      DEALLOCATE(3)
+
+      PUSH(R3)
+      ADDC(R4, 1, R0)
+      PUSH(R0)
+      PUSH(R1) 
+      BR(quicksort, LP)
+bb:   DEALLOCATE(3)
+
+qx:   POP(R4)
+      POP(R3)
+      POP(R2)
+      POP(R1)
+cc:   MOVE(BP, SP) 
+      POP(BP)
+      POP(LP)
+      JMP(LP)
+      
+| Why MOVE(BP, SP) Can Be Removed
+| In this implementation, no additional local variables are allocated on the stack within the quicksort function. Therefore, the SP (after popping R1 to R4) is already at the same location as BP.
+
+| Here’s what happens in detail:
+
+| When POP(R4) to POP(R1) are executed, SP moves up by 16 bytes (4 bytes per register).
+| SP is now pointing at the saved BP (which is also the current BP).
+| Therefore, the stack frame at this point looks like this:
+
+| css
+| Copy code
+| [caller stack frame] -> [BP, LP] -> [SP]
