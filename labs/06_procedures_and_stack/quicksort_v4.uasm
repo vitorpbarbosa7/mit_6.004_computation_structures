@@ -1,0 +1,133 @@
+////////////////////////////////////////////////////////////////////////////////
+// Lab 4
+////////////////////////////////////////////////////////////////////////////////
+
+// Include the checkoff program:
+.include "checkoff.uasm"
+
+// Leave the following as zero to run ALL the test cases, and get your solution
+//   validated if all pass.  If you have trouble with test case N, set it to N
+//   to run JUST that test case (for easier debugging):
+TestCase:       LONG(0)
+
+// Quicksort-in-place code.  We include the C/Python version here as a comment;
+// you can use this as a model for your Beta assembly version:
+
+//def partition(array,left,right):
+//    # choose middle element of array as pivot
+//    pivotIndex = (left+right) >> 1;
+//    pivotValue = array[pivotIndex]
+//
+//    # swap array[right] and array[pivotIndex]
+//    # note that we already store array[pivotIndex] in pivotValue
+//    array[pivotIndex] = array[right]
+//
+//    # elements <= the pivot are moved to the left (smaller indices)
+//    storeIndex = left
+//    for i in xrange(left,right):  # don't include array[right]
+//        temp = array[i]
+//        if temp <= pivotValue:
+//            array[i] = array[storeIndex]
+//            array[storeIndex] = temp
+//            storeIndex += 1
+//
+//    # move pivot to its final place
+//    array[right] = array[storeIndex]
+//    array[storeIndex] = pivotValue;
+//    return storeIndex;
+
+partition:
+        PUSH(LP)
+        PUSH(BP)
+        MOVE(SP, BP)
+			
+		PUSH(R1) // To load array
+		PUSH(R2) // To load left
+		PUSH(R3) // To load right
+		PUSH(R7) // index not multiplied
+		PUSH(R4) // pivotIndex
+		PUSH(R8) // pivotValue
+		
+		// loop variables
+		PUSH(R9) // i from loop
+		PUSH(R12) // i multiplied by 4
+		PUSH(R13) // temp
+		PUSH(R10) // result comparison from loop
+		PUSH(R11) // storeIndex
+		PUSH(R14) // compare if 
+		PUSH(R15) // storeIndex multiplied by 4
+		PUSH(R16) // element array[storeIndex]
+		
+		
+		LD(BP, -12, R1) // array
+		LD(BP, -16, R2) // left
+		LD(BP, -20, R3) // right
+		
+		//pivotIndex = (left+right) >>1
+		ADD(R2, R3, R7)
+		SHRC(R7, 1, R7)
+			
+		// pivotValue = array[pivotIndex]
+		// multiplied index in R4
+		SHLC(R7, 2, R4)
+		// R8 will have the pivotValue
+		LD(R1,R4,R8)
+		
+		
+		
+		MOVE(R2, R9) // R9 which the i from the loop is initialized as the left 
+		MOVE(R2, R11) // storeIndex = left
+loop:	SHLC(R9, 2, R12)// i multiplied by 4
+		LD(R1, R12, R13) // temp value in the register
+		
+		CMPLE(R13, R8, R14)
+		BEQ(floop, R14)
+		
+		SHLC(R11, 2, R15) //StoreIndex multiplied by 4
+		LD(R1, R15, R16) // element array[storeIndex]
+		ST(R16, R1, R12) // store the contents of array[storeIndex] into array[i]
+		ST(R13, R1, R15) // store the contents of temp into array[storeIndex]
+		
+		ADDC(R11, 1, R11) // increment the storeIndex (not multiplied by four)
+	
+floop:	CMPEQ(R9, R3, R10) // if the i == right, then we stop, continue the code and not go back the loop
+     	BEQ(loop, R10)
+
+
+		
+
+// Fill in your code here...
+
+        MOVE(BP, SP)
+        POP(BP)
+        POP(LP)
+        JMP(LP)
+
+
+//def quicksort(array, left, right):
+//    if left < right:
+//        pivotIndex = partition(array,left,right)
+//        quicksort(array,left,pivotIndex-1)
+//        quicksort(array,pivotIndex+1,right)
+
+// quicksort(ArrayBase, left, right)
+quicksort:
+        PUSH(LP)
+        PUSH(BP)
+        MOVE(SP, BP)
+
+// Fill in your code here...
+
+        MOVE(BP, SP)
+        POP(BP)
+        POP(LP)
+        JMP(LP)
+
+// Allocate a stack: SP is initialized by checkoff code.
+StackBasePtr:
+        LONG(StackArea)
+
+.unprotect
+
+StackArea:
+        STORAGE(1000)
