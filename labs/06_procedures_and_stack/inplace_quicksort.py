@@ -25,10 +25,12 @@ def partition(array, left, right):
             array[storeIndex] = temp
             storeIndex += 1
 
+        print(array)
+        breakpoint()
+
     
     # move pivot to its final place
     array[right] = array[storeIndex]
-    print(array)
     # breakpoint()
 
     # 
@@ -52,8 +54,9 @@ def quicksort(array, left, right):
 if __name__ == '__main__':
 
     # array = [1,7,2,6,8,3,4]
-    array = [6,7,2,1,8,3,4]
-    quicksort(array, 0, len(array)-1)
+    array = [9,8,7,5,1,2,3]
+    # quicksort(array, 0, len(array)-1)
+    partition(array, 0, len(array)-1)
     print(array)
     
 
