@@ -1,0 +1,182 @@
+.include "beta.uasm"
+
+p_array=R1
+p_left=R2
+p_right=R3
+
+p_right_multiplied=R17
+p_array_right=R19
+
+p_pivotIndex=R7
+p_pivotIndex_mult=R4
+p_pivotValue=R8
+
+p_i=R9
+p_i_multi=R12
+p_temp=R13
+p_cmp_lopo=R10
+p_store_index=R0
+p_cmp_if=R14
+p_storeIndex_mult=R15
+p_array_storeIndex=R16
+
+p_array_pivotIndex_address=R18
+p_array_pivotIndex=R20
+
+
+
+BR(STEP1)
+
+// the array to be sorted
+. = 0x0004
+A: LONG(6) LONG(7) LONG(2) LONG(1) LONG(8) LONG(3) LONG(4)
+ALEN = (. - 4)/4
+
+. = 0x0040
+STEP1:
+	
+	CMOVE(., BP)
+	CMOVE(., SP)
+
+	CMOVE(A, p_array) // array
+	CMOVE(0, p_left) // left
+	CMOVE(ALEN-1, p_right) // right
+
+	PUSH(p_right) // right
+	PUSH(p_left) // left
+	PUSH(p_array) // array
+	BR(partition, LP)
+	
+	HALT()
+
+
+partition:
+        // Entry sequence -------------------
+        PUSH(LP) 
+        PUSH(BP)
+        MOVE(SP, BP)
+			
+		PUSH(p_array) // To load array
+		PUSH(p_left) // To load left
+		PUSH(p_right) // To load right
+		
+		PUSH(p_right_multiplied) // right multiplied by 4
+		PUSH(p_array_right) // load contents of right address
+		
+		
+		PUSH(p_pivotIndex) // index not multiplied
+		PUSH(p_pivotIndex_mult) // pivotIndex multiplied
+		PUSH(p_pivotValue) // pivotValue
+		
+		// loop variables
+		PUSH(p_i) // i from loop
+		PUSH(p_i_multi) // i multiplied by 4
+		PUSH(p_temp) // temp
+		PUSH(p_cmp_loop) // result comparison from loop
+		PUSH(p_storeIndex) // storeIndex
+		PUSH(p_cmp_if) // compare if 
+		PUSH(p_storeIndex_mult) // storeIndex multiplied by 4
+		PUSH(p_array_storeIndex) // element array[storeIndex]
+		
+		PUSH(p_array_pivotIndex_address) // get the array pivotIndex
+		PUSH(p_array_pivotIndex) // load the contents of pivotIndex
+		
+		
+		
+		// Procedure call instructions implementation -------------------
+		LD(BP, -12, p_array) // array
+		LD(BP, -16, p_left) // left
+		LD(BP, -20, p_right) // right
+		
+		//pivotIndex = (left+right) >>1
+		ADD(p_left, p_right, p_pivotIndex)
+		SHRC(p_pivotIndex, 1, p_pivotIndex)
+			
+		// pivotValue = array[pivotIndex]
+		// multiplied pivotIndex in p_pivotIndex_mult
+		SHLC(p_pivotIndex, 2, p_pivotIndex_mult)
+		// p_pivotValue will have the pivotValue
+		ADD(p_array, p_pivotIndex_mult, p_pivotValue)
+		LD(p_pivotValue,0,p_pivotValue)
+		
+		ADD(p_array, p_pivotIndex_mult, p_array_pivotIndex_address) // array pivot Index address at p_array_pivotIndex_address
+		SHLC(p_right, 2, p_right_multiplied) // right multiplied by 4
+		ADD(p_array, p_right_multiplied, p_right_multiplied) // address of the right element in the array
+		
+		LD(p_array_pivotIndex_address, 0, p_array_pivotIndex) // contents of array[pivotIndex]
+		LD(p_right_multiplied, 0, p_array_right) // contents of array[right]
+		
+		ST(p_array_pivotIndex, 0, p_right_multiplied) // swap
+		ST(p_array_right, 0, p_array_pivotIndex_address) // swap
+		
+		
+		
+		
+		
+		
+		MOVE(p_left, p_i) // p_i which the i from the loop is initialized as the left 
+		SUBC(p_i, 1, p_i)
+		MOVE(p_left, p_storeIndex) // storeIndex = left
+loop:	ADDC(p_i, 1, p_i)
+		SHLC(p_i, 2, p_i_multi)// i multiplied by 4
+		ADD(p_array, p_i_multi, p_temp) // address of the array[i]
+		LD(p_temp, p_storeIndex, p_temp) // temp value in the register
+		
+		CMPLE(p_temp, p_pivotValue, p_cmp_if)
+		BEQ(p_cmp_if, floop)
+		
+		SHLC(p_storeIndex, 2, p_storeIndex_mult) //StoreIndex multiplied by 4
+		ADD(p_array, p_storeIndex_mult, p_array_storeIndex) // correct address for array[storeIndex]
+		LD(p_array_storeIndex, 0, p_array_storeIndex) // element array[storeIndex]
+		ST(p_array_storeIndex, p_array, p_i_multi) // store the contents of array[storeIndex] into array[i]
+		ST(p_temp, p_array, p_storeIndex_mult) // store the contents of temp into array[storeIndex]
+		
+		ADDC(p_storeIndex, 1, p_storeIndex) // increment the storeIndex (not multiplied by four)
+		
+		// if the i == right, then we stop, continue the code and not go
+		//back the loop
+floop:	CMPEQ(p_i, p_right-1, p_cmp_loop) 
+
+     	BEQ(p_cmp_loop, loop)
+		
+		// move pivot to its final place
+		SHLC(p_storeIndex, 2, p_storeIndex_mult) // storeIndex multiplied by 4
+		ADD(p_array, p_storeIndex_mult, p_storeIndex_mult) // Address of array[storeIndex]
+		LD(p_storeIndex_mult, p_storeIndex, p_array_storeIndex) // element array[storeIndex]
+		
+		SHLC(p_right, 2, p_right_multiplied) // right multiplied by 4
+		ADD(p_array, p_right_multiplied, p_right_multiplied) // right address
+		ST(p_array_storeIndex, 0, p_right_multiplied) // array[right] = array[storeIndex]
+		
+		ST(p_pivotValue, 0, p_storeIndex_mult) // array[storeIndex] = pivotValue
+		
+		// Exit Sequence -------------------
+		POP(p_array) // To load array 
+		POP(p_left) // To load left
+		POP(p_right) // To load right
+		
+		POP(p_right_multiplied) // right multiplied by 4
+		
+		
+		POP(p_pivotIndex) // index not multiplied
+		POP(p_pivotIndex_mult) // pivotIndex
+		POP(p_pivotValue) // pivotValue
+		
+		// loop variables
+		POP(p_i) // i from loop
+		POP(p_i_multi) // i multiplied by 4
+		POP(p_temp) // temp
+		POP(p_cmp_loop) // result comparison from loop
+		POP(p_storeIndex) // storeIndex
+		POP(p_cmp_if) // compare if 
+		POP(p_storeIndex_mult) // storeIndex multiplied by 4
+		POP(p_array_storeIndex) // element array[storeIndex]
+		
+		POP(p_array_pivotIndex_address)
+		POP(p_array_pivotIndex)
+		
+
+        MOVE(BP, SP)
+        POP(BP)
+        POP(LP)
+        JMP(LP)
