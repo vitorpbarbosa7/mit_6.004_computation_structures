@@ -1,0 +1,4684 @@
+1
+00:00:00,030 --> 00:00:02,879
+today we're going to learn how to build
+
+2
+00:00:02,879 --> 00:00:04,950
+the beta and you guys are going to get
+
+3
+00:00:04,950 --> 00:00:08,039
+to do this as part of lab 5 so by the
+
+4
+00:00:08,039 --> 00:00:09,599
+time you're done with lab 5 you will
+
+5
+00:00:09,599 --> 00:00:11,780
+have actually built a 32-bit
+
+6
+00:00:11,780 --> 00:00:15,030
+microprocessor which is pretty exciting
+
+7
+00:00:15,030 --> 00:00:18,210
+so probably don't need to remind anybody
+
+8
+00:00:18,210 --> 00:00:21,390
+that quiz 2 is tomorrow the only thing
+
+9
+00:00:21,390 --> 00:00:23,400
+is that I would like to remind people of
+
+10
+00:00:23,400 --> 00:00:24,720
+is that you should try to go to your
+
+11
+00:00:24,720 --> 00:00:26,640
+assigned section so that we make sure to
+
+12
+00:00:26,640 --> 00:00:28,769
+have enough seats for everybody to take
+
+13
+00:00:28,769 --> 00:00:34,649
+the exam ok so before we get started
+
+14
+00:00:34,649 --> 00:00:36,480
+with talking about how it is that we're
+
+15
+00:00:36,480 --> 00:00:38,969
+going to design the hardware for the
+
+16
+00:00:38,969 --> 00:00:41,489
+beta let's think a little bit about what
+
+17
+00:00:41,489 --> 00:00:43,980
+goals we want to satisfy in our design
+
+18
+00:00:43,980 --> 00:00:46,410
+so first of all of course we care about
+
+19
+00:00:46,410 --> 00:00:48,960
+functionality right so it must work
+
+20
+00:00:48,960 --> 00:00:51,329
+correctly but in addition to working
+
+21
+00:00:51,329 --> 00:00:52,680
+correctly there are a couple other
+
+22
+00:00:52,680 --> 00:00:55,680
+things that we want to think of so the
+
+23
+00:00:55,680 --> 00:00:58,640
+first thing is that we might want to
+
+24
+00:00:58,640 --> 00:01:02,190
+maximize performance of our beta and so
+
+25
+00:01:02,190 --> 00:01:04,438
+how do we think about this measuring
+
+26
+00:01:04,438 --> 00:01:07,049
+this performance we measure it in terms
+
+27
+00:01:07,049 --> 00:01:10,080
+of instructions that we execute per
+
+28
+00:01:10,080 --> 00:01:12,960
+second and specifically we use the term
+
+29
+00:01:12,960 --> 00:01:15,270
+MIPS which stands for millions of
+
+30
+00:01:15,270 --> 00:01:18,450
+instructions per second as a way of of
+
+31
+00:01:18,450 --> 00:01:20,970
+essentially rating how good a processor
+
+32
+00:01:20,970 --> 00:01:25,020
+is another thing that we might want to
+
+33
+00:01:25,020 --> 00:01:27,479
+consider is the cost of developing this
+
+34
+00:01:27,479 --> 00:01:29,640
+processor and cost of integrated
+
+35
+00:01:29,640 --> 00:01:32,159
+circuits is directly proportional to the
+
+36
+00:01:32,159 --> 00:01:34,290
+its size so the smaller we can make it
+
+37
+00:01:34,290 --> 00:01:38,549
+the cheaper it's going to be and finally
+
+38
+00:01:38,549 --> 00:01:40,229
+we might want some kind of combination
+
+39
+00:01:40,229 --> 00:01:42,600
+of the two where we care about the
+
+40
+00:01:42,600 --> 00:01:44,579
+performance that you can get per unit
+
+41
+00:01:44,579 --> 00:01:47,840
+cost and if we're dealing with
+
+42
+00:01:47,840 --> 00:01:50,040
+applications which happen to care about
+
+43
+00:01:50,040 --> 00:01:53,970
+power like for example devices that that
+
+44
+00:01:53,970 --> 00:01:56,159
+need to be small then we're also going
+
+45
+00:01:56,159 --> 00:01:58,020
+to care about how our performance
+
+46
+00:01:58,020 --> 00:01:59,880
+changes with regards to power
+
+47
+00:01:59,880 --> 00:02:02,600
+consumption
+
+48
+00:02:02,790 --> 00:02:06,490
+okay so performance is inversely
+
+49
+00:02:06,490 --> 00:02:08,830
+proportional to the amount of time that
+
+50
+00:02:08,830 --> 00:02:11,380
+it takes to run our program so let's
+
+51
+00:02:11,380 --> 00:02:13,090
+think about what are the three things
+
+52
+00:02:13,090 --> 00:02:15,640
+that are going to affect the amount of
+
+53
+00:02:15,640 --> 00:02:18,100
+time it takes to run our program so the
+
+54
+00:02:18,100 --> 00:02:20,950
+first is the number of instructions in
+
+55
+00:02:20,950 --> 00:02:24,610
+our program okay so if we add some
+
+56
+00:02:24,610 --> 00:02:26,890
+really complicated instructions for
+
+57
+00:02:26,890 --> 00:02:28,420
+example something that might allow you
+
+58
+00:02:28,420 --> 00:02:32,980
+to add to values from memory and store
+
+59
+00:02:32,980 --> 00:02:34,840
+the result right back into memory as a
+
+60
+00:02:34,840 --> 00:02:37,330
+single instruction it's possible that
+
+61
+00:02:37,330 --> 00:02:39,070
+you could make your code shorter and
+
+62
+00:02:39,070 --> 00:02:41,230
+that's reduce the number of instructions
+
+63
+00:02:41,230 --> 00:02:42,940
+that you have in your program however
+
+64
+00:02:42,940 --> 00:02:45,370
+and so there's also a trade-off to that
+
+65
+00:02:45,370 --> 00:02:47,950
+which is that if you support such
+
+66
+00:02:47,950 --> 00:02:51,160
+complicated instructions then you know
+
+67
+00:02:51,160 --> 00:02:53,170
+the logic that's required in order to
+
+68
+00:02:53,170 --> 00:02:55,390
+decode exactly what needs to happen in
+
+69
+00:02:55,390 --> 00:02:57,430
+your data path and your circuitry itself
+
+70
+00:02:57,430 --> 00:02:59,260
+it's probably going to be more
+
+71
+00:02:59,260 --> 00:03:02,830
+complicated so when we talk about
+
+72
+00:03:02,830 --> 00:03:06,700
+reducing execution time we may want to
+
+73
+00:03:06,700 --> 00:03:09,579
+reduce the number of instructions but we
+
+74
+00:03:09,579 --> 00:03:11,560
+have to carefully think about what
+
+75
+00:03:11,560 --> 00:03:14,079
+that's going to do to our cycles per
+
+76
+00:03:14,079 --> 00:03:16,150
+instruction which is the second piece of
+
+77
+00:03:16,150 --> 00:03:21,100
+the puzzle okay so our time is dependent
+
+78
+00:03:21,100 --> 00:03:23,019
+on the average number of cycles that it
+
+79
+00:03:23,019 --> 00:03:25,299
+takes to execute an instruction and so
+
+80
+00:03:25,299 --> 00:03:27,640
+if I support instructions that are much
+
+81
+00:03:27,640 --> 00:03:29,560
+more complicated then chances are that
+
+82
+00:03:29,560 --> 00:03:31,720
+my average cycles per instruction is
+
+83
+00:03:31,720 --> 00:03:33,820
+going to go up so again these are sort
+
+84
+00:03:33,820 --> 00:03:35,290
+of trade-offs that are fighting against
+
+85
+00:03:35,290 --> 00:03:36,670
+each other and we need to take them into
+
+86
+00:03:36,670 --> 00:03:39,160
+consideration when making our design
+
+87
+00:03:39,160 --> 00:03:41,650
+decisions and then the third component
+
+88
+00:03:41,650 --> 00:03:45,940
+is cycle time okay and this is dominated
+
+89
+00:03:45,940 --> 00:03:49,269
+by how complicated our logic is so if
+
+90
+00:03:49,269 --> 00:03:51,579
+we're able to actually implement our
+
+91
+00:03:51,579 --> 00:03:54,310
+beta using very simple logic then we're
+
+92
+00:03:54,310 --> 00:03:56,049
+going to be able to reduce the clock
+
+93
+00:03:56,049 --> 00:03:58,900
+cycle which we can run our beta and thus
+
+94
+00:03:58,900 --> 00:04:03,549
+improve performance so what we're going
+
+95
+00:04:03,549 --> 00:04:07,959
+to present today is a simple model for
+
+96
+00:04:07,959 --> 00:04:10,359
+for exit for creating the hardware for
+
+97
+00:04:10,359 --> 00:04:11,919
+our beta and in this model the
+
+98
+00:04:11,919 --> 00:04:13,959
+assumption is that the clocks per
+
+99
+00:04:13,959 --> 00:04:15,870
+instruction R is one
+
+100
+00:04:15,870 --> 00:04:17,850
+okay there are ways to do better than
+
+101
+00:04:17,850 --> 00:04:19,168
+that you couldn't do things like
+
+102
+00:04:19,168 --> 00:04:23,940
+pipelining your processor you can have
+
+103
+00:04:23,940 --> 00:04:25,979
+better memory systems which reduce your
+
+104
+00:04:25,979 --> 00:04:27,690
+cycle time all sorts of things which
+
+105
+00:04:27,690 --> 00:04:29,100
+we're also going to get into in the next
+
+106
+00:04:29,100 --> 00:04:31,470
+few lectures but today we'll focus on
+
+107
+00:04:31,470 --> 00:04:33,660
+this more simple implementation that
+
+108
+00:04:33,660 --> 00:04:38,090
+assumes a clocks per instruction of what
+
+109
+00:04:38,419 --> 00:04:39,660
+okay
+
+110
+00:04:39,660 --> 00:04:41,820
+so very quick recap of what it is that
+
+111
+00:04:41,820 --> 00:04:43,710
+the beta does hopefully by now
+
+112
+00:04:43,710 --> 00:04:45,960
+everyone's pretty familiar with this so
+
+113
+00:04:45,960 --> 00:04:47,850
+we have four types of instructions that
+
+114
+00:04:47,850 --> 00:04:51,840
+are supported we have the OP type of
+
+115
+00:04:51,840 --> 00:04:53,610
+instructions which are basically ALU
+
+116
+00:04:53,610 --> 00:04:55,710
+operations that operate on two registers
+
+117
+00:04:55,710 --> 00:04:59,040
+we have ops C which are ALU operations
+
+118
+00:04:59,040 --> 00:05:00,900
+that operate on one register and a
+
+119
+00:05:00,900 --> 00:05:04,139
+constant we have memory operations like
+
+120
+00:05:04,139 --> 00:05:06,600
+load and store and we have control flow
+
+121
+00:05:06,600 --> 00:05:09,960
+operations like jumps and branches okay
+
+122
+00:05:09,960 --> 00:05:13,500
+so we've learned about what the format
+
+123
+00:05:13,500 --> 00:05:16,020
+is of each of these instructions and we
+
+124
+00:05:16,020 --> 00:05:17,310
+learned that there are two types of
+
+125
+00:05:17,310 --> 00:05:19,770
+instruction formats that we support the
+
+126
+00:05:19,770 --> 00:05:23,190
+first is one where you specify three
+
+127
+00:05:23,190 --> 00:05:24,960
+registers so that you can have two
+
+128
+00:05:24,960 --> 00:05:26,940
+registers as your source operands and
+
+129
+00:05:26,940 --> 00:05:29,340
+one is your destination this is used for
+
+130
+00:05:29,340 --> 00:05:34,380
+the OP type of operations and now we go
+
+131
+00:05:34,380 --> 00:05:36,590
+a little bit further in that we actually
+
+132
+00:05:36,590 --> 00:05:38,639
+specify a little bit more information
+
+133
+00:05:38,639 --> 00:05:41,250
+about our 6 bit opcode so what we're
+
+134
+00:05:41,250 --> 00:05:42,810
+going to do in order to differentiate
+
+135
+00:05:42,810 --> 00:05:44,610
+between the various classes of
+
+136
+00:05:44,610 --> 00:05:46,590
+instructions is we're going to use the
+
+137
+00:05:46,590 --> 00:05:49,200
+top 2 bits of our opcode to give us some
+
+138
+00:05:49,200 --> 00:05:50,669
+information about what kind of
+
+139
+00:05:50,669 --> 00:05:53,700
+instruction it is so specifically we'll
+
+140
+00:05:53,700 --> 00:05:56,820
+use 1 0 in the top two bits to indicate
+
+141
+00:05:56,820 --> 00:05:59,490
+that you're doing an OP instruction
+
+142
+00:05:59,490 --> 00:06:01,800
+which is an opera ALU operation on two
+
+143
+00:06:01,800 --> 00:06:04,620
+registers ok our second type of
+
+144
+00:06:04,620 --> 00:06:07,260
+instruction is one that uses a constant
+
+145
+00:06:07,260 --> 00:06:12,270
+instead of a second register and so this
+
+146
+00:06:12,270 --> 00:06:14,220
+will cover the OP C types of
+
+147
+00:06:14,220 --> 00:06:17,190
+instructions and in this case what we're
+
+148
+00:06:17,190 --> 00:06:18,840
+going to do is we're going to set the
+
+149
+00:06:18,840 --> 00:06:21,510
+top two bits of our opcode to one one in
+
+150
+00:06:21,510 --> 00:06:23,310
+order to identify those types of
+
+151
+00:06:23,310 --> 00:06:25,919
+instructions now for the remaining ones
+
+152
+00:06:25,919 --> 00:06:28,620
+the memory and control our instruction
+
+153
+00:06:28,620 --> 00:06:29,400
+format
+
+154
+00:06:29,400 --> 00:06:33,210
+looks the same but we will use yet
+
+155
+00:06:33,210 --> 00:06:36,650
+another opcode to identify those so
+
+156
+00:06:36,650 --> 00:06:39,270
+first let me back up a step and quickly
+
+157
+00:06:39,270 --> 00:06:41,880
+just summarize what it is that the ALU
+
+158
+00:06:41,880 --> 00:06:44,250
+is able to do and so we have four types
+
+159
+00:06:44,250 --> 00:06:46,410
+of operations that you guys built into
+
+160
+00:06:46,410 --> 00:06:49,139
+your ALU in lab 3 we have the arithmetic
+
+161
+00:06:49,139 --> 00:06:53,460
+type of operations we have compares we
+
+162
+00:06:53,460 --> 00:06:57,270
+have boolean logic and we have shift
+
+163
+00:06:57,270 --> 00:06:59,550
+operation okay and for each of those we
+
+164
+00:06:59,550 --> 00:07:02,130
+also have the comparable one that can
+
+165
+00:07:02,130 --> 00:07:03,960
+operate with a constant where you simply
+
+166
+00:07:03,960 --> 00:07:09,600
+add the c2 to this instruction name okay
+
+167
+00:07:09,600 --> 00:07:11,970
+so on to memory and control flow
+
+168
+00:07:11,970 --> 00:07:14,490
+operations here we see that we have the
+
+169
+00:07:14,490 --> 00:07:16,530
+same format into that sense that it uses
+
+170
+00:07:16,530 --> 00:07:18,960
+two registers and a constant but now
+
+171
+00:07:18,960 --> 00:07:20,400
+what we're going to do is we're going to
+
+172
+00:07:20,400 --> 00:07:22,440
+set the top two bits of our opcode to
+
+173
+00:07:22,440 --> 00:07:25,440
+zero one to identify that this case
+
+174
+00:07:25,440 --> 00:07:28,919
+covers our load and store operations as
+
+175
+00:07:28,919 --> 00:07:31,800
+well as our branch and jump operations
+
+176
+00:07:31,800 --> 00:07:36,780
+okay all right so in order to create the
+
+177
+00:07:36,780 --> 00:07:38,310
+hardware for our beta we're going to
+
+178
+00:07:38,310 --> 00:07:40,380
+take an incremental approach what we're
+
+179
+00:07:40,380 --> 00:07:42,479
+going to do is we're going to go through
+
+180
+00:07:42,479 --> 00:07:44,250
+the various types of instructions that
+
+181
+00:07:44,250 --> 00:07:47,190
+we need to support and add the necessary
+
+182
+00:07:47,190 --> 00:07:48,810
+hardware for each and then we're going
+
+183
+00:07:48,810 --> 00:07:50,760
+to combine the pieces as we go along
+
+184
+00:07:50,760 --> 00:07:53,220
+using multiplexers or whatever other
+
+185
+00:07:53,220 --> 00:07:55,650
+kind of logic we need to make it all
+
+186
+00:07:55,650 --> 00:07:58,020
+work together so we're going to start
+
+187
+00:07:58,020 --> 00:08:02,010
+off with our ALU instructions then we'll
+
+188
+00:08:02,010 --> 00:08:03,930
+add the load and store operations to
+
+189
+00:08:03,930 --> 00:08:06,330
+that then we'll add jump in branch
+
+190
+00:08:06,330 --> 00:08:09,090
+operations to that and finally we'll
+
+191
+00:08:09,090 --> 00:08:11,190
+also add hardware which allows us to
+
+192
+00:08:11,190 --> 00:08:13,050
+deal with exceptions when something goes
+
+193
+00:08:13,050 --> 00:08:18,000
+wrong in our program all right so the
+
+194
+00:08:18,000 --> 00:08:19,889
+hardware is gonna consist of some
+
+195
+00:08:19,889 --> 00:08:22,409
+components that you're all familiar with
+
+196
+00:08:22,409 --> 00:08:24,449
+at this point so one of the major
+
+197
+00:08:24,449 --> 00:08:27,419
+components are registers have multi bit
+
+198
+00:08:27,419 --> 00:08:30,090
+registers like 32-bit registers in order
+
+199
+00:08:30,090 --> 00:08:33,120
+to handle the fact that our data path is
+
+200
+00:08:33,120 --> 00:08:36,450
+32 bits wide and you'll note that these
+
+201
+00:08:36,450 --> 00:08:39,390
+registers are clock enabled so they
+
+202
+00:08:39,390 --> 00:08:42,000
+basically only load something into the
+
+203
+00:08:42,000 --> 00:08:42,889
+register on
+
+204
+00:08:42,889 --> 00:08:45,410
+rise in the clock edge okay and then
+
+205
+00:08:45,410 --> 00:08:46,910
+they'll hold that value for the entire
+
+206
+00:08:46,910 --> 00:08:50,359
+clock period we're also going to use
+
+207
+00:08:50,359 --> 00:08:53,149
+lots of muxes these muxes are going to
+
+208
+00:08:53,149 --> 00:08:55,579
+select between different portions of our
+
+209
+00:08:55,579 --> 00:08:58,309
+data path in order to execute the
+
+210
+00:08:58,309 --> 00:09:00,079
+appropriate behavior based on the type
+
+211
+00:09:00,079 --> 00:09:03,529
+of operation that you have we have our
+
+212
+00:09:03,529 --> 00:09:05,869
+ALU which is basically the ALU you built
+
+213
+00:09:05,869 --> 00:09:10,339
+in lab 3 and we have several types of
+
+214
+00:09:10,339 --> 00:09:12,649
+memories we're going to have our
+
+215
+00:09:12,649 --> 00:09:15,230
+register file as well as instruction and
+
+216
+00:09:15,230 --> 00:09:19,639
+data memories alright so let's start off
+
+217
+00:09:19,639 --> 00:09:22,160
+with the register file if you recall
+
+218
+00:09:22,160 --> 00:09:23,660
+when we first started talking about the
+
+219
+00:09:23,660 --> 00:09:26,179
+beta is a we drew a picture that was
+
+220
+00:09:26,179 --> 00:09:27,859
+pretty similar to this where we said you
+
+221
+00:09:27,859 --> 00:09:30,109
+have a bunch of registers and then you
+
+222
+00:09:30,109 --> 00:09:32,269
+have some multiplexers that can select
+
+223
+00:09:32,269 --> 00:09:34,129
+which of the registers you want to read
+
+224
+00:09:34,129 --> 00:09:37,369
+as your source operands then over here
+
+225
+00:09:37,369 --> 00:09:40,309
+we have a decoder that takes the address
+
+226
+00:09:40,309 --> 00:09:42,199
+that you want to write to and that's
+
+227
+00:09:42,199 --> 00:09:44,299
+used in order to select which register
+
+228
+00:09:44,299 --> 00:09:47,029
+you're going to write to if we zoom in
+
+229
+00:09:47,029 --> 00:09:50,119
+to one of these register blocks what
+
+230
+00:09:50,119 --> 00:09:53,379
+that actually looks like is it's a
+
+231
+00:09:53,379 --> 00:09:56,329
+register with an enable so what does
+
+232
+00:09:56,329 --> 00:09:58,939
+that mean it means that it's not always
+
+233
+00:09:58,939 --> 00:10:01,129
+going to load a new value into the
+
+234
+00:10:01,129 --> 00:10:03,980
+register on every rising clock edge but
+
+235
+00:10:03,980 --> 00:10:06,529
+rather it'll only do that when enable is
+
+236
+00:10:06,529 --> 00:10:10,249
+set to 1 okay so if enable is set to 1
+
+237
+00:10:10,249 --> 00:10:12,499
+we allow the new piece of data to come
+
+238
+00:10:12,499 --> 00:10:14,419
+through and on the next rising clock
+
+239
+00:10:14,419 --> 00:10:16,249
+edge that will get stored in our
+
+240
+00:10:16,249 --> 00:10:19,669
+register if enable is 0 we just keep the
+
+241
+00:10:19,669 --> 00:10:21,579
+previous value that was in our register
+
+242
+00:10:21,579 --> 00:10:25,879
+all right and just for simplicity we're
+
+243
+00:10:25,879 --> 00:10:27,889
+going to create this icon which is going
+
+244
+00:10:27,889 --> 00:10:30,399
+to represent this register file so
+
+245
+00:10:30,399 --> 00:10:34,489
+recall that we have 32 registers here
+
+246
+00:10:34,489 --> 00:10:38,179
+each of which is 32 bits wide so what
+
+247
+00:10:38,179 --> 00:10:39,859
+we're going to have in our register file
+
+248
+00:10:39,859 --> 00:10:43,459
+is we're going to have to read ports ok
+
+249
+00:10:43,459 --> 00:10:45,769
+we can read two registers at the same
+
+250
+00:10:45,769 --> 00:10:48,470
+time in order to specify which registers
+
+251
+00:10:48,470 --> 00:10:49,850
+we want to read we're going to provide a
+
+252
+00:10:49,850 --> 00:10:52,699
+5 bit address so if you recall in our
+
+253
+00:10:52,699 --> 00:10:54,739
+instruction format we had our a and our
+
+254
+00:10:54,739 --> 00:10:56,570
+B so you can use those
+
+255
+00:10:56,570 --> 00:10:58,940
+it's directly in order to address and
+
+256
+00:10:58,940 --> 00:11:00,830
+specify which of the registers you want
+
+257
+00:11:00,830 --> 00:11:03,230
+to read from your register file the
+
+258
+00:11:03,230 --> 00:11:06,110
+outputs which is the contents of these
+
+259
+00:11:06,110 --> 00:11:08,390
+registers that you selected are going to
+
+260
+00:11:08,390 --> 00:11:10,490
+come out here on your data ports and
+
+261
+00:11:10,490 --> 00:11:12,800
+each one of those outputs is going to be
+
+262
+00:11:12,800 --> 00:11:17,420
+32 bits wide now note that the two
+
+263
+00:11:17,420 --> 00:11:18,950
+addresses here are completely
+
+264
+00:11:18,950 --> 00:11:20,870
+independent of each other and so you
+
+265
+00:11:20,870 --> 00:11:22,640
+could choose to pick the same register
+
+266
+00:11:22,640 --> 00:11:25,010
+for RA and RB or different registers
+
+267
+00:11:25,010 --> 00:11:29,450
+it'll work in either way okay then we
+
+268
+00:11:29,450 --> 00:11:32,480
+have the controls for writing so in
+
+269
+00:11:32,480 --> 00:11:33,740
+order to be able to write to our
+
+270
+00:11:33,740 --> 00:11:36,830
+register file we have three pieces of
+
+271
+00:11:36,830 --> 00:11:39,320
+information in addition to having our
+
+272
+00:11:39,320 --> 00:11:41,330
+address just like we did for the read
+
+273
+00:11:41,330 --> 00:11:43,340
+we're gonna have a five bit address
+
+274
+00:11:43,340 --> 00:11:46,610
+which is typically the RC register that
+
+275
+00:11:46,610 --> 00:11:49,040
+we're specifying we're gonna have the 32
+
+276
+00:11:49,040 --> 00:11:51,110
+bit data which is the data that we want
+
+277
+00:11:51,110 --> 00:11:53,750
+to write to that specified register and
+
+278
+00:11:53,750 --> 00:11:56,150
+we're going to have a write enable which
+
+279
+00:11:56,150 --> 00:11:58,580
+is going to have to be one in order to
+
+280
+00:11:58,580 --> 00:12:00,650
+allow any kind of writing to happen at
+
+281
+00:12:00,650 --> 00:12:04,730
+all and again this whole system is
+
+282
+00:12:04,730 --> 00:12:06,830
+clocked so the way that this works is
+
+283
+00:12:06,830 --> 00:12:10,660
+that our our reads are actually
+
+284
+00:12:10,660 --> 00:12:13,430
+combinational so if I provide an address
+
+285
+00:12:13,430 --> 00:12:16,700
+to on the read address ports at some TPD
+
+286
+00:12:16,700 --> 00:12:19,040
+later I will get the data for the
+
+287
+00:12:19,040 --> 00:12:21,680
+register that I asked to read the writes
+
+288
+00:12:21,680 --> 00:12:24,830
+however are clocked so I provide the
+
+289
+00:12:24,830 --> 00:12:26,750
+right address it might be that I
+
+290
+00:12:26,750 --> 00:12:28,370
+provided at the beginning of the clock
+
+291
+00:12:28,370 --> 00:12:30,200
+cycle but that write isn't going to
+
+292
+00:12:30,200 --> 00:12:32,420
+actually happen until the rising edge of
+
+293
+00:12:32,420 --> 00:12:36,170
+the next clock and then just one other
+
+294
+00:12:36,170 --> 00:12:38,540
+little thing to remember is that even
+
+295
+00:12:38,540 --> 00:12:40,580
+though we have 32 registers we are
+
+296
+00:12:40,580 --> 00:12:43,490
+assuming that register 31 is always
+
+297
+00:12:43,490 --> 00:12:45,740
+going to produce the value 0 and so
+
+298
+00:12:45,740 --> 00:12:47,600
+there's also going to be some internal
+
+299
+00:12:47,600 --> 00:12:49,700
+logic in this register file that's going
+
+300
+00:12:49,700 --> 00:12:52,070
+to make sure that if you pick register
+
+301
+00:12:52,070 --> 00:12:54,500
+31 as the register you're reading that
+
+302
+00:12:54,500 --> 00:12:59,690
+the output you provide is just 0 ok so
+
+303
+00:12:59,690 --> 00:13:02,180
+let's take a quick look at what the
+
+304
+00:13:02,180 --> 00:13:04,420
+timing of our register file looks like
+
+305
+00:13:04,420 --> 00:13:07,310
+so as we mentioned we have two
+
+306
+00:13:07,310 --> 00:13:09,650
+combinational reads and one write that
+
+307
+00:13:09,650 --> 00:13:10,220
+happens
+
+308
+00:13:10,220 --> 00:13:13,370
+so the combinational reads you basically
+
+309
+00:13:13,370 --> 00:13:17,720
+as soon as you have the address on your
+
+310
+00:13:17,720 --> 00:13:21,950
+read address port TPD later you're going
+
+311
+00:13:21,950 --> 00:13:24,410
+to get the value of the contents of that
+
+312
+00:13:24,410 --> 00:13:30,800
+register on your read data port for our
+
+313
+00:13:30,800 --> 00:13:32,540
+writes things are a little bit more
+
+314
+00:13:32,540 --> 00:13:35,420
+complicated so we have three signals
+
+315
+00:13:35,420 --> 00:13:37,730
+that we want to worry about we want to
+
+316
+00:13:37,730 --> 00:13:39,980
+worry about our write enable which has
+
+317
+00:13:39,980 --> 00:13:42,350
+to be one in order to enable writing to
+
+318
+00:13:42,350 --> 00:13:45,350
+any register the right address which is
+
+319
+00:13:45,350 --> 00:13:47,180
+going to specify which register we were
+
+320
+00:13:47,180 --> 00:13:49,430
+going to write to and the write data
+
+321
+00:13:49,430 --> 00:13:51,080
+which is the data we actually want to
+
+322
+00:13:51,080 --> 00:13:54,770
+write to that register and now because
+
+323
+00:13:54,770 --> 00:13:57,650
+this is a clocked right we're going to
+
+324
+00:13:57,650 --> 00:14:00,110
+have our timing parameters T set up and
+
+325
+00:14:00,110 --> 00:14:03,710
+T hold so these three inputs need to be
+
+326
+00:14:03,710 --> 00:14:06,170
+stable and valid for T set up before the
+
+327
+00:14:06,170 --> 00:14:08,150
+rising edge of the clock and for T hold
+
+328
+00:14:08,150 --> 00:14:11,470
+after the rising edge of the clock now
+
+329
+00:14:11,470 --> 00:14:14,210
+assuming that we satisfy these timing
+
+330
+00:14:14,210 --> 00:14:16,790
+constraints then what we know will
+
+331
+00:14:16,790 --> 00:14:20,510
+happen is that after tpd after that
+
+332
+00:14:20,510 --> 00:14:23,540
+rising clock edge and these things have
+
+333
+00:14:23,540 --> 00:14:25,940
+have been held for the right amount of
+
+334
+00:14:25,940 --> 00:14:28,370
+time then we're gonna get a new value
+
+335
+00:14:28,370 --> 00:14:30,950
+written into our register okay
+
+336
+00:14:30,950 --> 00:14:33,560
+so just one thing to note here is that
+
+337
+00:14:33,560 --> 00:14:35,960
+the value coming out from the read data
+
+338
+00:14:35,960 --> 00:14:37,790
+ports can actually change for two
+
+339
+00:14:37,790 --> 00:14:40,520
+reasons it can change because I change
+
+340
+00:14:40,520 --> 00:14:43,670
+the address that I'm reading from or it
+
+341
+00:14:43,670 --> 00:14:45,740
+can change because I happen to do a
+
+342
+00:14:45,740 --> 00:14:47,710
+write to the register that I'm reading
+
+343
+00:14:47,710 --> 00:14:52,360
+okay any questions about that
+
+344
+00:14:54,830 --> 00:14:58,410
+now one thing you might ask yourself is
+
+345
+00:14:58,410 --> 00:15:00,330
+well what if I want to read from and
+
+346
+00:15:00,330 --> 00:15:03,090
+write to the same register again just
+
+347
+00:15:03,090 --> 00:15:04,470
+like we could read to different
+
+348
+00:15:04,470 --> 00:15:05,970
+registers or the same one there's
+
+349
+00:15:05,970 --> 00:15:07,800
+actually no problem here in everything
+
+350
+00:15:07,800 --> 00:15:09,960
+there's no problem is because the writes
+
+351
+00:15:09,960 --> 00:15:12,560
+are clocked so what's going to happen is
+
+352
+00:15:12,560 --> 00:15:15,390
+if these two registers are the same
+
+353
+00:15:15,390 --> 00:15:17,280
+you're going to read the old value of
+
+354
+00:15:17,280 --> 00:15:20,550
+your register in the current clock cycle
+
+355
+00:15:20,550 --> 00:15:22,350
+and then on the next rising clock edge
+
+356
+00:15:22,350 --> 00:15:24,690
+you're going to write the new value into
+
+357
+00:15:24,690 --> 00:15:26,760
+that same register and it will become
+
+358
+00:15:26,760 --> 00:15:33,450
+available for the next clock cycle okay
+
+359
+00:15:33,450 --> 00:15:35,610
+so let's start thinking about what do we
+
+360
+00:15:35,610 --> 00:15:37,500
+need to do in order to support ALU
+
+361
+00:15:37,500 --> 00:15:42,030
+instructions so what ALU instructions do
+
+362
+00:15:42,030 --> 00:15:44,070
+is fairly simple if you have an ADD for
+
+363
+00:15:44,070 --> 00:15:46,020
+example you're going to add the contents
+
+364
+00:15:46,020 --> 00:15:48,180
+of register r2 to register r3 and store
+
+365
+00:15:48,180 --> 00:15:51,120
+that into register r4 and our source and
+
+366
+00:15:51,120 --> 00:15:53,310
+destination operands are specified here
+
+367
+00:15:53,310 --> 00:15:57,420
+in the RCRA and our B fields and recall
+
+368
+00:15:57,420 --> 00:16:00,060
+notice again that our opcode begins with
+
+369
+00:16:00,060 --> 00:16:02,100
+the top two bits one zero two then to
+
+370
+00:16:02,100 --> 00:16:04,440
+indicate that this is an ALU operation
+
+371
+00:16:04,440 --> 00:16:07,500
+that uses two registers now what our
+
+372
+00:16:07,500 --> 00:16:09,180
+hardware is going to have to do is it's
+
+373
+00:16:09,180 --> 00:16:10,530
+going to have to execute these five
+
+374
+00:16:10,530 --> 00:16:12,300
+steps regardless of which type of
+
+375
+00:16:12,300 --> 00:16:15,060
+instruction we're using the first step
+
+376
+00:16:15,060 --> 00:16:18,090
+is to fetch the instruction that we're
+
+377
+00:16:18,090 --> 00:16:20,430
+going to execute so the way that we do
+
+378
+00:16:20,430 --> 00:16:23,010
+this is we have our special PC program
+
+379
+00:16:23,010 --> 00:16:25,470
+which holds the address of the
+
+380
+00:16:25,470 --> 00:16:27,480
+instruction that we should execute next
+
+381
+00:16:27,480 --> 00:16:29,880
+and so we fetch the instruction that's
+
+382
+00:16:29,880 --> 00:16:32,010
+located at the address that the PC
+
+383
+00:16:32,010 --> 00:16:34,920
+points to and that's the instruction
+
+384
+00:16:34,920 --> 00:16:37,200
+that we want to execute so the next step
+
+385
+00:16:37,200 --> 00:16:39,480
+is to decode that instruction so we have
+
+386
+00:16:39,480 --> 00:16:41,820
+to look at the opcode of that
+
+387
+00:16:41,820 --> 00:16:43,830
+instruction and determine what operation
+
+388
+00:16:43,830 --> 00:16:46,080
+it is that we need to perform in order
+
+389
+00:16:46,080 --> 00:16:48,290
+to execute that operation correctly
+
+390
+00:16:48,290 --> 00:16:51,300
+after that we need to read our source
+
+391
+00:16:51,300 --> 00:16:53,130
+operands and so we're going to use the
+
+392
+00:16:53,130 --> 00:16:55,710
+our a and our B fields or a constant if
+
+393
+00:16:55,710 --> 00:17:00,090
+it's a constant operation in order to to
+
+394
+00:17:00,090 --> 00:17:02,520
+be ready to execute using those two
+
+395
+00:17:02,520 --> 00:17:04,650
+operands and finally we're going to
+
+396
+00:17:04,650 --> 00:17:07,530
+actually execute our operation and the
+
+397
+00:17:07,530 --> 00:17:08,460
+last step
+
+398
+00:17:08,460 --> 00:17:10,140
+is we'll take the result of that
+
+399
+00:17:10,140 --> 00:17:11,819
+execution and write it back to our
+
+400
+00:17:11,819 --> 00:17:15,060
+register file so one thing you have to
+
+401
+00:17:15,060 --> 00:17:16,980
+realize is that the clock period at
+
+402
+00:17:16,980 --> 00:17:18,300
+which we're going to be able to clock
+
+403
+00:17:18,300 --> 00:17:21,569
+our beta is going to need to be long
+
+404
+00:17:21,569 --> 00:17:23,970
+enough to allow for all five of these
+
+405
+00:17:23,970 --> 00:17:26,099
+steps to happen for every single one of
+
+406
+00:17:26,099 --> 00:17:30,510
+our instructions all right so let's
+
+407
+00:17:30,510 --> 00:17:32,580
+begin with the instruction fetch and
+
+408
+00:17:32,580 --> 00:17:36,090
+decode logic okay so this is relatively
+
+409
+00:17:36,090 --> 00:17:38,700
+simple we start with our PC register
+
+410
+00:17:38,700 --> 00:17:41,610
+over here this is a 32-bit register
+
+411
+00:17:41,610 --> 00:17:43,680
+whose bottom two bits are always 0
+
+412
+00:17:43,680 --> 00:17:46,110
+because we want to point to a word
+
+413
+00:17:46,110 --> 00:17:48,480
+boundary so the full instruction in our
+
+414
+00:17:48,480 --> 00:17:51,510
+instruction memory and the value of this
+
+415
+00:17:51,510 --> 00:17:54,270
+PC becomes the address that we feed to
+
+416
+00:17:54,270 --> 00:17:56,700
+our instruction memory in order to get
+
+417
+00:17:56,700 --> 00:17:59,340
+to fetch the instruction that we want to
+
+418
+00:17:59,340 --> 00:18:04,410
+execute on that cycle if we're executing
+
+419
+00:18:04,410 --> 00:18:07,020
+instructions sequentially then in order
+
+420
+00:18:07,020 --> 00:18:08,940
+to fetch the next instruction we're
+
+421
+00:18:08,940 --> 00:18:11,520
+going to have to add 4 to our PC and so
+
+422
+00:18:11,520 --> 00:18:16,260
+we have a simple add 4 adder which just
+
+423
+00:18:16,260 --> 00:18:18,810
+increments PC by 4 and then that new
+
+424
+00:18:18,810 --> 00:18:21,930
+value is fed in on the next rising edge
+
+425
+00:18:21,930 --> 00:18:24,180
+of the clock so the PC in order to fetch
+
+426
+00:18:24,180 --> 00:18:27,030
+the next instruction we also have this
+
+427
+00:18:27,030 --> 00:18:30,270
+reset multiplexer here which allows you
+
+428
+00:18:30,270 --> 00:18:33,240
+to initialize the PC to a certain value
+
+429
+00:18:33,240 --> 00:18:35,580
+when you want to reset your system so
+
+430
+00:18:35,580 --> 00:18:37,410
+you know if it's in the middle of some
+
+431
+00:18:37,410 --> 00:18:39,240
+operation and you have to reset it you
+
+432
+00:18:39,240 --> 00:18:43,170
+can force it to go back to 0 and then
+
+433
+00:18:43,170 --> 00:18:45,750
+over here we have our control logic the
+
+434
+00:18:45,750 --> 00:18:47,790
+control logic is going to be responsible
+
+435
+00:18:47,790 --> 00:18:50,340
+for producing all the control signals
+
+436
+00:18:50,340 --> 00:18:51,750
+that will make the right things happen
+
+437
+00:18:51,750 --> 00:18:55,050
+in our data path and so what the control
+
+438
+00:18:55,050 --> 00:18:57,210
+logic is going to be set to is going to
+
+439
+00:18:57,210 --> 00:19:00,300
+be dependent on the 6 bit opcode that
+
+440
+00:19:00,300 --> 00:19:02,160
+we're going to read from the instruction
+
+441
+00:19:02,160 --> 00:19:04,140
+so you can think of your control logic
+
+442
+00:19:04,140 --> 00:19:07,340
+as basically being a read-only memory
+
+443
+00:19:07,340 --> 00:19:09,870
+where the address that you're feeding
+
+444
+00:19:09,870 --> 00:19:12,000
+into the street only memory is the 6
+
+445
+00:19:12,000 --> 00:19:13,980
+bits of your opcode which means that I
+
+446
+00:19:13,980 --> 00:19:17,570
+have 64 locations in my ROM and then the
+
+447
+00:19:17,570 --> 00:19:20,460
+for each location I'm going to have all
+
+448
+00:19:20,460 --> 00:19:22,230
+of the control signals that are we
+
+449
+00:19:22,230 --> 00:19:25,080
+wired for my beta and they'll be set to
+
+450
+00:19:25,080 --> 00:19:27,120
+different values depending on what the
+
+451
+00:19:27,120 --> 00:19:35,730
+opcode says all right so what is the
+
+452
+00:19:35,730 --> 00:19:39,169
+data path for an ALU operation look like
+
+453
+00:19:39,169 --> 00:19:43,470
+it's relatively it's not too complicated
+
+454
+00:19:43,470 --> 00:19:45,419
+we're going to need first of all a
+
+455
+00:19:45,419 --> 00:19:47,820
+register file we're going to need a
+
+456
+00:19:47,820 --> 00:19:51,290
+register file that has to read ports and
+
+457
+00:19:51,290 --> 00:19:54,030
+these reports are going to be used to
+
+458
+00:19:54,030 --> 00:19:55,799
+specify which are the two registers we
+
+459
+00:19:55,799 --> 00:19:58,620
+want to read and then we'll be able to
+
+460
+00:19:58,620 --> 00:20:00,980
+access the data from those two registers
+
+461
+00:20:00,980 --> 00:20:04,140
+feed it into the ALU that we've already
+
+462
+00:20:04,140 --> 00:20:07,110
+built and then the output of the ALU is
+
+463
+00:20:07,110 --> 00:20:09,120
+going to come back through the right
+
+464
+00:20:09,120 --> 00:20:11,190
+data port of our register file and that
+
+465
+00:20:11,190 --> 00:20:13,830
+will allow us to write the result of the
+
+466
+00:20:13,830 --> 00:20:17,760
+ALU back into our register file okay we
+
+467
+00:20:17,760 --> 00:20:21,360
+have the control signal ALU FN which we
+
+468
+00:20:21,360 --> 00:20:23,910
+need to create which is going to specify
+
+469
+00:20:23,910 --> 00:20:26,490
+what operation our ALU should perform
+
+470
+00:20:26,490 --> 00:20:30,480
+based on the opcode okay and so there is
+
+471
+00:20:30,480 --> 00:20:34,020
+a mapping from the opcodes to the ALU
+
+472
+00:20:34,020 --> 00:20:37,500
+offense which need to be fed to as the
+
+473
+00:20:37,500 --> 00:20:42,809
+control to your ALU and then there's one
+
+474
+00:20:42,809 --> 00:20:45,030
+more signal which is very important we
+
+475
+00:20:45,030 --> 00:20:45,960
+call it work
+
+476
+00:20:45,960 --> 00:20:48,150
+it stands for write an able register
+
+477
+00:20:48,150 --> 00:20:50,400
+file so this is the enable that we were
+
+478
+00:20:50,400 --> 00:20:53,669
+talking about for our rights okay so the
+
+479
+00:20:53,669 --> 00:20:55,620
+only way that we can actually write
+
+480
+00:20:55,620 --> 00:20:57,780
+something to this register file is if we
+
+481
+00:20:57,780 --> 00:21:01,440
+set worth equal to 1 and when worth is
+
+482
+00:21:01,440 --> 00:21:03,419
+equal to 1 then on their next rising
+
+483
+00:21:03,419 --> 00:21:05,850
+clock edge we're going to write to the
+
+484
+00:21:05,850 --> 00:21:08,040
+register whose address is specified by
+
+485
+00:21:08,040 --> 00:21:12,000
+this RC value ok and so we'll introduce
+
+486
+00:21:12,000 --> 00:21:15,120
+our little 6mm 4 mascot what we call him
+
+487
+00:21:15,120 --> 00:21:17,280
+worth because that's the control logic
+
+488
+00:21:17,280 --> 00:21:20,549
+input that he likes the most all right
+
+489
+00:21:20,549 --> 00:21:23,370
+so not so far so good
+
+490
+00:21:23,370 --> 00:21:25,320
+now what we want to do is we want to
+
+491
+00:21:25,320 --> 00:21:27,540
+augment this in order to support ALU
+
+492
+00:21:27,540 --> 00:21:32,580
+operations with constants so oops sorry
+
+493
+00:21:32,580 --> 00:21:34,350
+actually let me just show you the data
+
+494
+00:21:34,350 --> 00:21:36,060
+flow for the a
+
+495
+00:21:36,060 --> 00:21:38,190
+you operation with two registers before
+
+496
+00:21:38,190 --> 00:21:40,110
+we move on so essentially what's gonna
+
+497
+00:21:40,110 --> 00:21:42,150
+happen here is we're going to read our
+
+498
+00:21:42,150 --> 00:21:45,360
+two register values we're going to use
+
+499
+00:21:45,360 --> 00:21:47,880
+the control logic to produce the correct
+
+500
+00:21:47,880 --> 00:21:51,120
+control signal for the ALU that's going
+
+501
+00:21:51,120 --> 00:21:53,280
+to then make the ALU execute the correct
+
+502
+00:21:53,280 --> 00:21:55,470
+operation and then the data is going to
+
+503
+00:21:55,470 --> 00:21:57,300
+come back to the register file
+
+504
+00:21:57,300 --> 00:21:59,670
+we'll set worth equal to one to show
+
+505
+00:21:59,670 --> 00:22:00,930
+that we actually want to store our
+
+506
+00:22:00,930 --> 00:22:03,270
+results in the register file and the
+
+507
+00:22:03,270 --> 00:22:05,310
+data that comes out of the ALU is going
+
+508
+00:22:05,310 --> 00:22:07,530
+to go into the right data port of our
+
+509
+00:22:07,530 --> 00:22:11,370
+register file all right so now we want
+
+510
+00:22:11,370 --> 00:22:14,670
+to support ALU operations with constants
+
+511
+00:22:14,670 --> 00:22:17,310
+so this is pretty similar to what we
+
+512
+00:22:17,310 --> 00:22:19,200
+have saw before the difference is that
+
+513
+00:22:19,200 --> 00:22:21,560
+in this case we want the second operand
+
+514
+00:22:21,560 --> 00:22:25,140
+taken input to our ALU instead of coming
+
+515
+00:22:25,140 --> 00:22:26,880
+from the register file we want it to
+
+516
+00:22:26,880 --> 00:22:28,770
+come from the sign-extended constant
+
+517
+00:22:28,770 --> 00:22:31,350
+that's well the constant is part of our
+
+518
+00:22:31,350 --> 00:22:33,840
+instruction so what we do is we simply
+
+519
+00:22:33,840 --> 00:22:36,930
+grab those 16 bits from our instruction
+
+520
+00:22:36,930 --> 00:22:39,300
+will sign extend them and we'll talk in
+
+521
+00:22:39,300 --> 00:22:41,400
+a second about how you do that and then
+
+522
+00:22:41,400 --> 00:22:43,800
+you just add a multiplexer here which
+
+523
+00:22:43,800 --> 00:22:46,830
+has a control signal B select which is
+
+524
+00:22:46,830 --> 00:22:48,720
+going to be 0 if you want to do regular
+
+525
+00:22:48,720 --> 00:22:51,060
+ALU operations with two registers and
+
+526
+00:22:51,060 --> 00:22:53,370
+it's going to be 1 if you want to do an
+
+527
+00:22:53,370 --> 00:22:56,880
+ALU operation with a constant and so
+
+528
+00:22:56,880 --> 00:22:59,580
+based on the opcode we'll determine what
+
+529
+00:22:59,580 --> 00:23:01,500
+this V cell control signal needs to be
+
+530
+00:23:01,500 --> 00:23:05,280
+and then note that we actually don't
+
+531
+00:23:05,280 --> 00:23:07,920
+really need very much logic in order to
+
+532
+00:23:07,920 --> 00:23:09,990
+do the sign extension the sign extension
+
+533
+00:23:09,990 --> 00:23:14,190
+is just taking this bit 15 and copying
+
+534
+00:23:14,190 --> 00:23:17,040
+it if we're into the high order 16 bits
+
+535
+00:23:17,040 --> 00:23:22,560
+of your of your data path and so by just
+
+536
+00:23:22,560 --> 00:23:24,780
+using some wiring we can actually
+
+537
+00:23:24,780 --> 00:23:26,520
+implement this function of sign
+
+538
+00:23:26,520 --> 00:23:29,790
+extension okay so we'll take the 16 bits
+
+539
+00:23:29,790 --> 00:23:32,550
+from the instruction directly that 15 is
+
+540
+00:23:32,550 --> 00:23:35,190
+going to be replicated into bits 16
+
+541
+00:23:35,190 --> 00:23:40,260
+through 31 all right so now quickly what
+
+542
+00:23:40,260 --> 00:23:42,450
+is the data flow here look like again
+
+543
+00:23:42,450 --> 00:23:44,460
+very similar to before except now we
+
+544
+00:23:44,460 --> 00:23:47,370
+have to set B cell equal to 1 in order
+
+545
+00:23:47,370 --> 00:23:49,920
+to get the constant into our ALU
+
+546
+00:23:49,920 --> 00:23:53,490
+we have the function that's based on
+
+547
+00:23:53,490 --> 00:23:55,170
+that whatever the control logic told us
+
+548
+00:23:55,170 --> 00:23:56,520
+is the function we want the ALU to
+
+549
+00:23:56,520 --> 00:23:59,880
+perform and then we feed our result back
+
+550
+00:23:59,880 --> 00:24:01,770
+to our register file and we have worth
+
+551
+00:24:01,770 --> 00:24:04,980
+equal to what so what you see here is
+
+552
+00:24:04,980 --> 00:24:07,080
+that with a really a very relatively
+
+553
+00:24:07,080 --> 00:24:10,170
+simple data path we've actually just
+
+554
+00:24:10,170 --> 00:24:12,630
+implemented almost all of the beta
+
+555
+00:24:12,630 --> 00:24:16,610
+instructions okay so that's one of the
+
+556
+00:24:16,610 --> 00:24:19,830
+huge benefits of RISC type processors
+
+557
+00:24:19,830 --> 00:24:21,510
+where a RISC stands for reduced
+
+558
+00:24:21,510 --> 00:24:23,790
+instruction set computers where the idea
+
+559
+00:24:23,790 --> 00:24:26,280
+is that you instead of having very
+
+560
+00:24:26,280 --> 00:24:28,590
+complex instructions that might be able
+
+561
+00:24:28,590 --> 00:24:31,440
+to take things like memory locations as
+
+562
+00:24:31,440 --> 00:24:33,450
+your source a source operands you choose
+
+563
+00:24:33,450 --> 00:24:35,960
+to go with a simpler route and have
+
+564
+00:24:35,960 --> 00:24:38,010
+potentially more instructions but
+
+565
+00:24:38,010 --> 00:24:39,900
+simpler ones so that the hardware that
+
+566
+00:24:39,900 --> 00:24:41,760
+you could have to build is much much
+
+567
+00:24:41,760 --> 00:24:46,020
+easier to build all right so let's move
+
+568
+00:24:46,020 --> 00:24:48,210
+on to the load instruction to do a load
+
+569
+00:24:48,210 --> 00:24:52,050
+instruction we have to have our memory
+
+570
+00:24:52,050 --> 00:24:53,550
+here now note that this instruction
+
+571
+00:24:53,550 --> 00:24:55,770
+memory and data memory are actually the
+
+572
+00:24:55,770 --> 00:24:57,870
+same main memory if you recall when we
+
+573
+00:24:57,870 --> 00:24:59,850
+talked about memories we said would use
+
+574
+00:24:59,850 --> 00:25:02,760
+the same memory for both we just split
+
+575
+00:25:02,760 --> 00:25:05,130
+them up here in order to make it easier
+
+576
+00:25:05,130 --> 00:25:07,200
+to visualize but really just think of
+
+577
+00:25:07,200 --> 00:25:09,960
+this as a three port memory where you
+
+578
+00:25:09,960 --> 00:25:12,240
+have to read ports one of them is for
+
+579
+00:25:12,240 --> 00:25:14,370
+reading instructions the second is for
+
+580
+00:25:14,370 --> 00:25:16,290
+reading data and then you have one write
+
+581
+00:25:16,290 --> 00:25:18,480
+port so in order to write to the data
+
+582
+00:25:18,480 --> 00:25:21,870
+memory and so what happens now the
+
+583
+00:25:21,870 --> 00:25:23,520
+instruction that we want to execute is
+
+584
+00:25:23,520 --> 00:25:26,370
+shown up here and what we see is that
+
+585
+00:25:26,370 --> 00:25:28,830
+the calculation of the address for loads
+
+586
+00:25:28,830 --> 00:25:32,010
+is basically looks the same as an ADD C
+
+587
+00:25:32,010 --> 00:25:34,170
+instruction so we've already got the
+
+588
+00:25:34,170 --> 00:25:35,880
+hardware that we need in order to
+
+589
+00:25:35,880 --> 00:25:38,700
+produce the address and so what we have
+
+590
+00:25:38,700 --> 00:25:40,380
+to do is we're going to use the same
+
+591
+00:25:40,380 --> 00:25:42,360
+path here that we use for the add C
+
+592
+00:25:42,360 --> 00:25:45,060
+instruction and now the output of the
+
+593
+00:25:45,060 --> 00:25:48,660
+ALU instead of being feeding the right
+
+594
+00:25:48,660 --> 00:25:51,990
+data path of our of our of our register
+
+595
+00:25:51,990 --> 00:25:54,360
+file it's actually now going to be used
+
+596
+00:25:54,360 --> 00:25:57,090
+as the address of our data memory okay
+
+597
+00:25:57,090 --> 00:25:58,890
+we're also going to have some control
+
+598
+00:25:58,890 --> 00:26:00,930
+signals for our data memory which are
+
+599
+00:26:00,930 --> 00:26:02,750
+going to tell us whether we are
+
+600
+00:26:02,750 --> 00:26:05,480
+writing to the to the memory which is
+
+601
+00:26:05,480 --> 00:26:08,780
+the MWR stands for a memory right and
+
+602
+00:26:08,780 --> 00:26:11,540
+we're gonna have mo e which stands for
+
+603
+00:26:11,540 --> 00:26:13,880
+memory output enable and so we set
+
+604
+00:26:13,880 --> 00:26:15,890
+memory output enable to one when we want
+
+605
+00:26:15,890 --> 00:26:18,560
+to read from it we set memory write to
+
+606
+00:26:18,560 --> 00:26:21,770
+one when we want to write to it and of
+
+607
+00:26:21,770 --> 00:26:23,390
+course when we don't want to write we
+
+608
+00:26:23,390 --> 00:26:25,190
+have to make sure that this value is
+
+609
+00:26:25,190 --> 00:26:27,230
+zero so we don't inadvertently write
+
+610
+00:26:27,230 --> 00:26:28,910
+something that we didn't mean to write
+
+611
+00:26:28,910 --> 00:26:32,170
+into our memory and now we have a new
+
+612
+00:26:32,170 --> 00:26:34,190
+multiplexer that we just added to our
+
+613
+00:26:34,190 --> 00:26:37,100
+data path this WD cell multiplexer and
+
+614
+00:26:37,100 --> 00:26:40,730
+so when WD cell is equal to two we're
+
+615
+00:26:40,730 --> 00:26:42,590
+gonna take the value that's coming out
+
+616
+00:26:42,590 --> 00:26:45,200
+of our data memory as the data that's
+
+617
+00:26:45,200 --> 00:26:47,060
+going to be fed back into our register
+
+618
+00:26:47,060 --> 00:26:51,020
+file okay so so that's exactly what we
+
+619
+00:26:51,020 --> 00:26:53,420
+want here for the load and so we take
+
+620
+00:26:53,420 --> 00:26:55,670
+the value that came out of the memory at
+
+621
+00:26:55,670 --> 00:26:57,230
+this location and that's what's gonna
+
+622
+00:26:57,230 --> 00:27:00,020
+get written back into register R C so
+
+623
+00:27:00,020 --> 00:27:03,170
+very quickly to look at the data flow we
+
+624
+00:27:03,170 --> 00:27:05,450
+first follow the path of the ad Z in
+
+625
+00:27:05,450 --> 00:27:09,080
+order to use a sign extended constant to
+
+626
+00:27:09,080 --> 00:27:11,900
+add to our register RA and we do that by
+
+627
+00:27:11,900 --> 00:27:14,060
+making the control signal B selects
+
+628
+00:27:14,060 --> 00:27:19,490
+equal to 1 we then set the ALU FN to be
+
+629
+00:27:19,490 --> 00:27:22,520
+a plus B so that we can do the addition
+
+630
+00:27:22,520 --> 00:27:24,200
+of those two things in order to produce
+
+631
+00:27:24,200 --> 00:27:29,390
+the address for our load this address is
+
+632
+00:27:29,390 --> 00:27:32,840
+used to decide which location in memory
+
+633
+00:27:32,840 --> 00:27:36,620
+we want to read and then we set the
+
+634
+00:27:36,620 --> 00:27:39,080
+control signals for our memory to say I
+
+635
+00:27:39,080 --> 00:27:40,970
+want to read something and so memory
+
+636
+00:27:40,970 --> 00:27:43,520
+write is zero memory output enable is 1
+
+637
+00:27:43,520 --> 00:27:47,930
+and now I get the data out of my memory
+
+638
+00:27:47,930 --> 00:27:51,800
+I set WD cell to 2 and then that comes
+
+639
+00:27:51,800 --> 00:27:54,290
+back over here and finally I set Worth
+
+640
+00:27:54,290 --> 00:27:56,540
+to 1 in order to enable writing to my
+
+641
+00:27:56,540 --> 00:28:01,180
+register file ok any questions so far
+
+642
+00:28:01,180 --> 00:28:03,520
+good
+
+643
+00:28:03,520 --> 00:28:06,640
+so moving on to store store is very
+
+644
+00:28:06,640 --> 00:28:08,800
+similar to load in the sense that we're
+
+645
+00:28:08,800 --> 00:28:10,240
+going to produce the address for our
+
+646
+00:28:10,240 --> 00:28:12,190
+memory in exactly the same way as the
+
+647
+00:28:12,190 --> 00:28:14,590
+load the main difference with a store is
+
+648
+00:28:14,590 --> 00:28:17,080
+where our source comes from so in this
+
+649
+00:28:17,080 --> 00:28:19,480
+case our sources register our seat now
+
+650
+00:28:19,480 --> 00:28:20,890
+if you look at our data path so far
+
+651
+00:28:20,890 --> 00:28:23,230
+without this new piece we're about to
+
+652
+00:28:23,230 --> 00:28:24,970
+add we don't have a way of actually
+
+653
+00:28:24,970 --> 00:28:27,100
+reading the contents of register our
+
+654
+00:28:27,100 --> 00:28:29,140
+seat so what we're going to do is we add
+
+655
+00:28:29,140 --> 00:28:31,600
+this additional multiplexer here that
+
+656
+00:28:31,600 --> 00:28:34,540
+allows us to choose between RB and RC as
+
+657
+00:28:34,540 --> 00:28:38,470
+our second read operand okay and of
+
+658
+00:28:38,470 --> 00:28:40,960
+course it works out nicely that store
+
+659
+00:28:40,960 --> 00:28:43,240
+operations don't actually make use of RB
+
+660
+00:28:43,240 --> 00:28:46,720
+and so it's perfectly fine to take over
+
+661
+00:28:46,720 --> 00:28:49,059
+that port for this particular operation
+
+662
+00:28:49,059 --> 00:28:52,300
+so on a store our control logic is going
+
+663
+00:28:52,300 --> 00:28:54,190
+to be responsible for making our a to
+
+664
+00:28:54,190 --> 00:28:57,970
+sell equal to one for all other types of
+
+665
+00:28:57,970 --> 00:28:59,830
+instructions it'll make our a to sell
+
+666
+00:28:59,830 --> 00:29:03,220
+equal to zero so that the register B
+
+667
+00:29:03,220 --> 00:29:05,980
+will be the one selected out of this out
+
+668
+00:29:05,980 --> 00:29:09,640
+of the register file ok the other thing
+
+669
+00:29:09,640 --> 00:29:11,230
+we have to do is we need to add a
+
+670
+00:29:11,230 --> 00:29:14,020
+connection from our second data port
+
+671
+00:29:14,020 --> 00:29:18,340
+into the right data input of our memory
+
+672
+00:29:18,340 --> 00:29:20,830
+okay so what comes out of the register
+
+673
+00:29:20,830 --> 00:29:22,780
+file is the value that we want to write
+
+674
+00:29:22,780 --> 00:29:27,040
+to the memory and the last thing to note
+
+675
+00:29:27,040 --> 00:29:29,470
+is that we don't have this is the one
+
+676
+00:29:29,470 --> 00:29:31,300
+instruction for which Worth is going to
+
+677
+00:29:31,300 --> 00:29:33,730
+be equal to zero okay the store
+
+678
+00:29:33,730 --> 00:29:35,470
+instruction is the only instruction
+
+679
+00:29:35,470 --> 00:29:37,420
+where we don't actually write anything
+
+680
+00:29:37,420 --> 00:29:39,400
+back to the register file and the way
+
+681
+00:29:39,400 --> 00:29:41,170
+that we achieve that is by setting work
+
+682
+00:29:41,170 --> 00:29:44,710
+to zero and so again if we look at the
+
+683
+00:29:44,710 --> 00:29:47,710
+data flow through here we begin with
+
+684
+00:29:47,710 --> 00:29:50,020
+something like an add see instruction we
+
+685
+00:29:50,020 --> 00:29:52,030
+are where we said B sell equal to 1 in
+
+686
+00:29:52,030 --> 00:29:54,309
+order to produce the correct address in
+
+687
+00:29:54,309 --> 00:29:57,490
+our for our through our Lu we're gonna
+
+688
+00:29:57,490 --> 00:30:00,040
+have to do an ADD function in the ALU in
+
+689
+00:30:00,040 --> 00:30:02,740
+order to get that correct address we'll
+
+690
+00:30:02,740 --> 00:30:05,350
+then use that address to tell the data
+
+691
+00:30:05,350 --> 00:30:07,390
+memory which location we want to write
+
+692
+00:30:07,390 --> 00:30:12,250
+to in this case we also have to produce
+
+693
+00:30:12,250 --> 00:30:14,230
+the value that we want to write so we're
+
+694
+00:30:14,230 --> 00:30:16,840
+going to set our a to sell equal to 1
+
+695
+00:30:16,840 --> 00:30:19,419
+in order to have the register that's
+
+696
+00:30:19,419 --> 00:30:21,340
+right over here we register our C
+
+697
+00:30:21,340 --> 00:30:24,700
+instead of our B and then that value is
+
+698
+00:30:24,700 --> 00:30:27,309
+going to come out here and it's going to
+
+699
+00:30:27,309 --> 00:30:28,990
+go into the right data port of our
+
+700
+00:30:28,990 --> 00:30:32,289
+memory we have to set our control
+
+701
+00:30:32,289 --> 00:30:34,450
+signals accordingly so in this case we
+
+702
+00:30:34,450 --> 00:30:37,090
+want to set MWR to 1 because we're
+
+703
+00:30:37,090 --> 00:30:41,080
+writing to memory and mo e to 0 and then
+
+704
+00:30:41,080 --> 00:30:44,169
+we're gonna set WD cell to don't care in
+
+705
+00:30:44,169 --> 00:30:46,330
+this case because we're not actually
+
+706
+00:30:46,330 --> 00:30:49,299
+making use of either the ALU output or
+
+707
+00:30:49,299 --> 00:30:52,360
+the output of our data memory okay
+
+708
+00:30:52,360 --> 00:30:55,720
+and we're guaranteed of that because we
+
+709
+00:30:55,720 --> 00:30:58,510
+said worth equal to zero okay so now
+
+710
+00:30:58,510 --> 00:31:00,669
+note that when you actually create the
+
+711
+00:31:00,669 --> 00:31:03,580
+hardware for your for your beta there
+
+712
+00:31:03,580 --> 00:31:06,309
+will be an actual signal for a wd cell
+
+713
+00:31:06,309 --> 00:31:08,049
+but setting it as a don't care
+
+714
+00:31:08,049 --> 00:31:10,149
+essentially allows you to potentially
+
+715
+00:31:10,149 --> 00:31:12,370
+simplify your logic if you were to
+
+716
+00:31:12,370 --> 00:31:14,620
+implement your control ROM with
+
+717
+00:31:14,620 --> 00:31:17,860
+combinational logic not your controller
+
+718
+00:31:17,860 --> 00:31:22,299
+arm I mean your controlled logic okay so
+
+719
+00:31:22,299 --> 00:31:25,630
+we've got ALU operations of both kinds
+
+720
+00:31:25,630 --> 00:31:28,059
+we've got loads and stores now we want
+
+721
+00:31:28,059 --> 00:31:30,070
+to look at operations that change the
+
+722
+00:31:30,070 --> 00:31:32,740
+control flow okay and so we're going to
+
+723
+00:31:32,740 --> 00:31:35,289
+be back over in this portion of our
+
+724
+00:31:35,289 --> 00:31:37,149
+circuit which is things that affect our
+
+725
+00:31:37,149 --> 00:31:39,669
+program counter which instruction we're
+
+726
+00:31:39,669 --> 00:31:42,190
+going to fetch next so what do we need
+
+727
+00:31:42,190 --> 00:31:44,010
+in order to support a jump instruction
+
+728
+00:31:44,010 --> 00:31:45,970
+there are two things that a jump
+
+729
+00:31:45,970 --> 00:31:48,700
+instruction does the first is that it's
+
+730
+00:31:48,700 --> 00:31:50,380
+going to take the contents of register
+
+731
+00:31:50,380 --> 00:31:54,399
+RA and make that the new value of the PC
+
+732
+00:31:54,399 --> 00:31:57,190
+and in addition it's going to store the
+
+733
+00:31:57,190 --> 00:32:01,390
+value PC plus 4 into register RC so we
+
+734
+00:32:01,390 --> 00:32:04,240
+add this new path coming out of our PC
+
+735
+00:32:04,240 --> 00:32:07,570
+plus 4 adder and this value here is PC
+
+736
+00:32:07,570 --> 00:32:10,510
+plus 4 and so if we set WD cell equal to
+
+737
+00:32:10,510 --> 00:32:13,779
+0 will get PC plus 4 being fed back as
+
+738
+00:32:13,779 --> 00:32:16,120
+the data for the R register file right
+
+739
+00:32:16,120 --> 00:32:20,770
+and then on for selecting of the PC
+
+740
+00:32:20,770 --> 00:32:23,880
+we're going to have now a larger
+
+741
+00:32:23,880 --> 00:32:27,280
+multiplexer which for a jump you want to
+
+742
+00:32:27,280 --> 00:32:29,610
+set PC selects equal to 2
+
+743
+00:32:29,610 --> 00:32:32,400
+and the address that's going to feed it
+
+744
+00:32:32,400 --> 00:32:34,950
+directly into the PC is the value that's
+
+745
+00:32:34,950 --> 00:32:38,220
+in register RA and so we label that JT
+
+746
+00:32:38,220 --> 00:32:40,799
+which stands for jump target and this
+
+747
+00:32:40,799 --> 00:32:42,750
+value which is just the contents of RA
+
+748
+00:32:42,750 --> 00:32:45,720
+is fed into the second input of our
+
+749
+00:32:45,720 --> 00:32:50,910
+multiple cell multiplexer and so to look
+
+750
+00:32:50,910 --> 00:32:53,610
+through the data flow we have our PC
+
+751
+00:32:53,610 --> 00:32:56,730
+plus 4 value coming in here we set WD
+
+752
+00:32:56,730 --> 00:32:59,880
+cell equal to 0 or equal to 1 that
+
+753
+00:32:59,880 --> 00:33:03,900
+enables writing PC plus 4 into register
+
+754
+00:33:03,900 --> 00:33:08,880
+RC and then we have the RA register
+
+755
+00:33:08,880 --> 00:33:11,370
+coming into this jump target input of
+
+756
+00:33:11,370 --> 00:33:12,750
+our PC cell MUX
+
+757
+00:33:12,750 --> 00:33:15,570
+we set PC cell equal to 2 and that way
+
+758
+00:33:15,570 --> 00:33:17,280
+that's gonna be the next value that's
+
+759
+00:33:17,280 --> 00:33:20,360
+going to be loaded into our PC register
+
+760
+00:33:20,360 --> 00:33:25,169
+and then the rest of them are Doe cares
+
+761
+00:33:25,169 --> 00:33:29,490
+except for the MWR which we said has to
+
+762
+00:33:29,490 --> 00:33:32,040
+be 0 if we don't want to if we want to
+
+763
+00:33:32,040 --> 00:33:34,559
+ensure that we're not writing some kind
+
+764
+00:33:34,559 --> 00:33:40,110
+of random data into our memory ok all
+
+765
+00:33:40,110 --> 00:33:43,169
+right so we're almost there so now we're
+
+766
+00:33:43,169 --> 00:33:45,570
+onto branch instructions so what do we
+
+767
+00:33:45,570 --> 00:33:48,510
+need for branch instructions branch
+
+768
+00:33:48,510 --> 00:33:51,480
+instructions they do some some of what
+
+769
+00:33:51,480 --> 00:33:53,160
+the jump instruction did which is that
+
+770
+00:33:53,160 --> 00:33:55,679
+your PC plus 4 value is going to be
+
+771
+00:33:55,679 --> 00:33:58,260
+stored into register RC and so that's
+
+772
+00:33:58,260 --> 00:34:00,570
+going to make use of this data path
+
+773
+00:34:00,570 --> 00:34:03,360
+right here just like the jump did but
+
+774
+00:34:03,360 --> 00:34:06,000
+now the calculation of our next address
+
+775
+00:34:06,000 --> 00:34:08,668
+is a little bit more complicated and
+
+776
+00:34:08,668 --> 00:34:10,679
+what we want to do is we want to take
+
+777
+00:34:10,679 --> 00:34:13,230
+the PC plus 4 value that's coming out of
+
+778
+00:34:13,230 --> 00:34:16,109
+here and add to that 4 times the sign
+
+779
+00:34:16,109 --> 00:34:18,510
+extended constant and so we have a new
+
+780
+00:34:18,510 --> 00:34:21,899
+special register sorry a new special
+
+781
+00:34:21,899 --> 00:34:24,690
+adder called the branch offset a dirt
+
+782
+00:34:24,690 --> 00:34:27,840
+which we use in order to calculate PC
+
+783
+00:34:27,840 --> 00:34:29,909
+plus 4 plus 4 times sign extended
+
+784
+00:34:29,909 --> 00:34:33,719
+constant now note that doing the 4 times
+
+785
+00:34:33,719 --> 00:34:36,449
+again just like the sign extension was
+
+786
+00:34:36,449 --> 00:34:37,859
+something that we could just do through
+
+787
+00:34:37,859 --> 00:34:40,530
+wiring the 4 times is also something we
+
+788
+00:34:40,530 --> 00:34:43,168
+can just do through wiring basically the
+
+789
+00:34:43,168 --> 00:34:44,010
+way that you multiple
+
+790
+00:34:44,010 --> 00:34:46,530
+a number by four is you shifted to the
+
+791
+00:34:46,530 --> 00:34:48,780
+left by two and so that just means that
+
+792
+00:34:48,780 --> 00:34:50,668
+I need to make my bottom two bits be
+
+793
+00:34:50,668 --> 00:34:54,330
+zero and all my other two bits shifted
+
+794
+00:34:54,330 --> 00:34:56,690
+to the left with the sign extension
+
+795
+00:34:56,690 --> 00:35:00,300
+being executed as well this time for 14
+
+796
+00:35:00,300 --> 00:35:03,300
+bits rather than 16 and since I I'm
+
+797
+00:35:03,300 --> 00:35:06,350
+shifting everything to the left by 2
+
+798
+00:35:06,350 --> 00:35:09,050
+okay and then finally we have some
+
+799
+00:35:09,050 --> 00:35:12,420
+combinational logic based on our our a
+
+800
+00:35:12,420 --> 00:35:15,450
+register which is going to say okay if
+
+801
+00:35:15,450 --> 00:35:18,690
+RA is equal to 0 then the signal Z is
+
+802
+00:35:18,690 --> 00:35:21,390
+going to be 1 and if RA is not equal to
+
+803
+00:35:21,390 --> 00:35:24,660
+0 then Z is going to be 0 and we feed
+
+804
+00:35:24,660 --> 00:35:27,540
+this Z input to the control logic and
+
+805
+00:35:27,540 --> 00:35:30,090
+that's going to help us determine what
+
+806
+00:35:30,090 --> 00:35:32,640
+PC cell should be whether we want a
+
+807
+00:35:32,640 --> 00:35:34,680
+branch or not so if we're going to take
+
+808
+00:35:34,680 --> 00:35:36,330
+the branch we're gonna make PC Cell
+
+809
+00:35:36,330 --> 00:35:38,280
+equal to 1 if we're not going to take
+
+810
+00:35:38,280 --> 00:35:39,990
+the branch we're gonna make PC Cell
+
+811
+00:35:39,990 --> 00:35:44,880
+equal to 0 all right and so let's see
+
+812
+00:35:44,880 --> 00:35:47,370
+the data flow for this as well so we've
+
+813
+00:35:47,370 --> 00:35:50,220
+got PC plus 4 coming through here we
+
+814
+00:35:50,220 --> 00:35:53,130
+make a WD selects equal to 0 so that
+
+815
+00:35:53,130 --> 00:35:55,410
+we're writing the PC plus 4 value into
+
+816
+00:35:55,410 --> 00:35:58,410
+register RC we come back here with that
+
+817
+00:35:58,410 --> 00:36:00,780
+value that gets written into register RC
+
+818
+00:36:00,780 --> 00:36:05,790
+with worth equal to 1 we then have what
+
+819
+00:36:05,790 --> 00:36:08,790
+this combinational logic here is it's a
+
+820
+00:36:08,790 --> 00:36:12,690
+32-bit nor ok a 32-bit nor is going to
+
+821
+00:36:12,690 --> 00:36:15,150
+do exactly what you want which is if all
+
+822
+00:36:15,150 --> 00:36:17,460
+the bits are 0 it'll produce a 1
+
+823
+00:36:17,460 --> 00:36:21,000
+otherwise it will produce a 0 and so
+
+824
+00:36:21,000 --> 00:36:23,010
+that's going to be used to generate this
+
+825
+00:36:23,010 --> 00:36:26,160
+z signal which is going to feed some
+
+826
+00:36:26,160 --> 00:36:28,170
+additional logic in our control logic
+
+827
+00:36:28,170 --> 00:36:30,570
+which will control whether pc select
+
+828
+00:36:30,570 --> 00:36:37,200
+should be 0 or 1 and then the PC plus 4
+
+829
+00:36:37,200 --> 00:36:40,620
+value and the 4 time sign extended
+
+830
+00:36:40,620 --> 00:36:42,600
+constant are coming to this new special
+
+831
+00:36:42,600 --> 00:36:45,210
+adder and we're producing the
+
+832
+00:36:45,210 --> 00:36:47,340
+destination of our branch in the case
+
+833
+00:36:47,340 --> 00:36:50,100
+that it's taken and that goes into the
+
+834
+00:36:50,100 --> 00:36:53,930
+one input of the PC cell box
+
+835
+00:36:55,869 --> 00:36:58,849
+and again the rest of our control
+
+836
+00:36:58,849 --> 00:37:02,240
+signals are don't care except for MWR
+
+837
+00:37:02,240 --> 00:37:04,730
+which we need to continue to ensure is
+
+838
+00:37:04,730 --> 00:37:06,470
+zero so that we don't write something
+
+839
+00:37:06,470 --> 00:37:09,920
+inadvertently to our memory okay so far
+
+840
+00:37:09,920 --> 00:37:11,440
+so good
+
+841
+00:37:11,440 --> 00:37:14,000
+excellent so we've done all of our
+
+842
+00:37:14,000 --> 00:37:15,380
+instructions so far
+
+843
+00:37:15,380 --> 00:37:17,710
+oh sorry actually one more load relative
+
+844
+00:37:17,710 --> 00:37:21,260
+so what is load relative load relative
+
+845
+00:37:21,260 --> 00:37:24,200
+is similar to a load in that it's just
+
+846
+00:37:24,200 --> 00:37:26,000
+going to get a piece of data from memory
+
+847
+00:37:26,000 --> 00:37:28,400
+the difference between load and load
+
+848
+00:37:28,400 --> 00:37:30,410
+relative is the way that we calculate
+
+849
+00:37:30,410 --> 00:37:34,309
+the address from which we're going to to
+
+850
+00:37:34,309 --> 00:37:36,559
+load a value and what we're doing here
+
+851
+00:37:36,559 --> 00:37:38,990
+if you look at this this is PC plus 4
+
+852
+00:37:38,990 --> 00:37:41,390
+plus 4 times sign extended constant this
+
+853
+00:37:41,390 --> 00:37:43,609
+is actually the output of our branch
+
+854
+00:37:43,609 --> 00:37:46,309
+offset adder okay so you might want to
+
+855
+00:37:46,309 --> 00:37:48,289
+ask yourself well what does that mean
+
+856
+00:37:48,289 --> 00:37:50,359
+you know to load a value using the
+
+857
+00:37:50,359 --> 00:37:52,990
+output of this branch offset adder and
+
+858
+00:37:52,990 --> 00:37:55,430
+what that means is basically that's your
+
+859
+00:37:55,430 --> 00:37:57,980
+loading of value from some location
+
+860
+00:37:57,980 --> 00:38:01,160
+that's nearby to this current LDR
+
+861
+00:38:01,160 --> 00:38:03,140
+instruction so you might want to ask
+
+862
+00:38:03,140 --> 00:38:05,000
+yourself well why would I ever want to
+
+863
+00:38:05,000 --> 00:38:06,799
+do that right I mean next to this
+
+864
+00:38:06,799 --> 00:38:08,089
+instruction I just have other
+
+865
+00:38:08,089 --> 00:38:10,160
+instructions so why am I going to want
+
+866
+00:38:10,160 --> 00:38:13,039
+to load that as a piece of data and it
+
+867
+00:38:13,039 --> 00:38:15,770
+turns out that there's a good reason for
+
+868
+00:38:15,770 --> 00:38:18,770
+it and that is if for example you have a
+
+869
+00:38:18,770 --> 00:38:20,960
+very large constant that will you want
+
+870
+00:38:20,960 --> 00:38:25,130
+to use in your program for example if we
+
+871
+00:38:25,130 --> 00:38:28,250
+wanted to do something like x times this
+
+872
+00:38:28,250 --> 00:38:31,910
+big constant 1 2 3 4 5 6 I can't fit
+
+873
+00:38:31,910 --> 00:38:34,960
+this constant into my 16-bit operations
+
+874
+00:38:34,960 --> 00:38:38,420
+so instead I have to have it stored
+
+875
+00:38:38,420 --> 00:38:40,579
+somewhere in memory I need to load it
+
+876
+00:38:40,579 --> 00:38:43,910
+into a register and then do to register
+
+877
+00:38:43,910 --> 00:38:46,910
+a to register a operation in order to do
+
+878
+00:38:46,910 --> 00:38:50,720
+that multiplication so in order to to do
+
+879
+00:38:50,720 --> 00:38:53,299
+this it's useful to be able to you know
+
+880
+00:38:53,299 --> 00:38:56,000
+to store this constant somewhere nearby
+
+881
+00:38:56,000 --> 00:38:58,250
+in my program and so the way that we
+
+882
+00:38:58,250 --> 00:38:59,960
+would do that is you would have a
+
+883
+00:38:59,960 --> 00:39:02,539
+special label let's call it c1 here
+
+884
+00:39:02,539 --> 00:39:04,579
+where you're storing this piece of data
+
+885
+00:39:04,579 --> 00:39:06,470
+because it's kind of part of your
+
+886
+00:39:06,470 --> 00:39:07,630
+program
+
+887
+00:39:07,630 --> 00:39:12,009
+and then if I do LDR of c1 into r1 then
+
+888
+00:39:12,009 --> 00:39:14,019
+that's going to load this nearby
+
+889
+00:39:14,019 --> 00:39:20,049
+location into register r1 okay and so so
+
+890
+00:39:20,049 --> 00:39:24,279
+note that that you can't just do a
+
+891
+00:39:24,279 --> 00:39:26,650
+regular load because you have no idea
+
+892
+00:39:26,650 --> 00:39:29,349
+where in your memory you are okay and
+
+893
+00:39:29,349 --> 00:39:31,839
+the load can only use a 16-bit constant
+
+894
+00:39:31,839 --> 00:39:35,650
+as its address and so you could use a
+
+895
+00:39:35,650 --> 00:39:38,619
+load if this if this location happened
+
+896
+00:39:38,619 --> 00:39:40,569
+to be something that required fewer than
+
+897
+00:39:40,569 --> 00:39:43,269
+16 bits to represent but if this address
+
+898
+00:39:43,269 --> 00:39:45,759
+was large then the way that you would
+
+899
+00:39:45,759 --> 00:39:47,920
+represent it is using a load relative
+
+900
+00:39:47,920 --> 00:39:53,979
+instruction any questions about that all
+
+901
+00:39:53,979 --> 00:39:54,369
+right
+
+902
+00:39:54,369 --> 00:39:58,440
+so the data path for a load relative is
+
+903
+00:39:58,440 --> 00:40:00,640
+once again we pretty much have
+
+904
+00:40:00,640 --> 00:40:02,380
+everything that we need the only thing
+
+905
+00:40:02,380 --> 00:40:04,380
+we need to add is this one additional
+
+906
+00:40:04,380 --> 00:40:07,509
+multiplexer so we have this a select
+
+907
+00:40:07,509 --> 00:40:10,839
+multiplexer which picks RA when the
+
+908
+00:40:10,839 --> 00:40:13,450
+value is 0 or it picks this PC plus 4
+
+909
+00:40:13,450 --> 00:40:15,910
+plus 4 times sign extended constant when
+
+910
+00:40:15,910 --> 00:40:19,599
+a select is 1 and so for a load relative
+
+911
+00:40:19,599 --> 00:40:21,460
+instruction we're just going to pick
+
+912
+00:40:21,460 --> 00:40:25,839
+this path now mr. blue over here asked a
+
+913
+00:40:25,839 --> 00:40:26,859
+very good question
+
+914
+00:40:26,859 --> 00:40:28,989
+which is if you think about what's
+
+915
+00:40:28,989 --> 00:40:31,479
+actually happening here because we put
+
+916
+00:40:31,479 --> 00:40:34,509
+this multiplexer before the ALU what
+
+917
+00:40:34,509 --> 00:40:35,710
+we're going to do is we're going to set
+
+918
+00:40:35,710 --> 00:40:37,900
+a selects equal to 1 we're going to get
+
+919
+00:40:37,900 --> 00:40:39,999
+the value of this branch off set adder
+
+920
+00:40:39,999 --> 00:40:42,219
+through here then we're gonna have to
+
+921
+00:40:42,219 --> 00:40:45,910
+set ALU FN to be a to just pass along
+
+922
+00:40:45,910 --> 00:40:49,509
+that value through our ALU and so you
+
+923
+00:40:49,509 --> 00:40:51,430
+could think to yourself well why not
+
+924
+00:40:51,430 --> 00:40:53,499
+just take this output and feed it
+
+925
+00:40:53,499 --> 00:40:56,469
+directly to a multiplexer over here any
+
+926
+00:40:56,469 --> 00:40:58,719
+ideas why you can't do why you might not
+
+927
+00:40:58,719 --> 00:41:01,079
+want to do that
+
+928
+00:41:03,900 --> 00:41:07,349
+guesses are ok
+
+929
+00:41:07,680 --> 00:41:10,230
+so I'll tell you why the reason is
+
+930
+00:41:10,230 --> 00:41:13,470
+because of wanting to minimize our clock
+
+931
+00:41:13,470 --> 00:41:17,190
+period okay so if I add a multiplexer
+
+932
+00:41:17,190 --> 00:41:19,380
+over here then that means that the
+
+933
+00:41:19,380 --> 00:41:21,900
+propagation delay of this multiplexer is
+
+934
+00:41:21,900 --> 00:41:25,500
+going to have to be included for every
+
+935
+00:41:25,500 --> 00:41:27,900
+single one of my operations okay because
+
+936
+00:41:27,900 --> 00:41:30,270
+in order to do a load or store operation
+
+937
+00:41:30,270 --> 00:41:32,340
+I would now have to go through this
+
+938
+00:41:32,340 --> 00:41:35,160
+multiplexer as well as this multiplexer
+
+939
+00:41:35,160 --> 00:41:37,380
+so even though you might think you know
+
+940
+00:41:37,380 --> 00:41:37,800
+that
+
+941
+00:41:37,800 --> 00:41:40,080
+oh that propagation delay is just 1 MUX
+
+942
+00:41:40,080 --> 00:41:42,480
+multiplexer it's not very much the
+
+943
+00:41:42,480 --> 00:41:44,340
+reason that it is so critical is because
+
+944
+00:41:44,340 --> 00:41:46,860
+it actually controls the clock cycle of
+
+945
+00:41:46,860 --> 00:41:50,480
+all of your operations ok so if you can
+
+946
+00:41:50,480 --> 00:41:53,160
+do things to shorten it then you're
+
+947
+00:41:53,160 --> 00:41:55,080
+gonna want to do that ok so even though
+
+948
+00:41:55,080 --> 00:41:56,750
+it seems a little bit more complicated
+
+949
+00:41:56,750 --> 00:41:59,460
+putting the a select MUX over here
+
+950
+00:41:59,460 --> 00:42:01,920
+allows the propagation delay of this to
+
+951
+00:42:01,920 --> 00:42:04,110
+occur in parallel with the B select MUX
+
+952
+00:42:04,110 --> 00:42:06,240
+and so now we're getting the benefit of
+
+953
+00:42:06,240 --> 00:42:08,100
+being able to do a load relative
+
+954
+00:42:08,100 --> 00:42:10,590
+instruction without paying anything as
+
+955
+00:42:10,590 --> 00:42:16,740
+far as performance goes okay and so
+
+956
+00:42:16,740 --> 00:42:19,140
+quickly we'll show the data flow here
+
+957
+00:42:19,140 --> 00:42:22,800
+and so we have the output of our of our
+
+958
+00:42:22,800 --> 00:42:25,500
+branch offset adder coming in here we
+
+959
+00:42:25,500 --> 00:42:28,200
+make a selects equal to 1 then we set
+
+960
+00:42:28,200 --> 00:42:30,750
+our ALU function equal to a to just
+
+961
+00:42:30,750 --> 00:42:33,000
+propagate that value through here that
+
+962
+00:42:33,000 --> 00:42:35,580
+becomes the address of our data memory
+
+963
+00:42:35,580 --> 00:42:39,360
+we then set the control signals for our
+
+964
+00:42:39,360 --> 00:42:41,400
+memory correctly zero because we don't
+
+965
+00:42:41,400 --> 00:42:43,740
+want to write one because we do want to
+
+966
+00:42:43,740 --> 00:42:46,620
+read the data comes out here we now set
+
+967
+00:42:46,620 --> 00:42:50,220
+W deselect equal to two that allows us
+
+968
+00:42:50,220 --> 00:42:52,230
+to get the output of our memory coming
+
+969
+00:42:52,230 --> 00:42:54,810
+back into our register file we set worth
+
+970
+00:42:54,810 --> 00:42:59,130
+equal to 1 and now this value came out
+
+971
+00:42:59,130 --> 00:43:01,130
+of our memory is going to be written to
+
+972
+00:43:01,130 --> 00:43:07,950
+wherever our C points to ok so we did
+
+973
+00:43:07,950 --> 00:43:10,980
+all of our instructions but there's one
+
+974
+00:43:10,980 --> 00:43:12,300
+more thing which we have to worry about
+
+975
+00:43:12,300 --> 00:43:14,550
+which are exceptions which is what do we
+
+976
+00:43:14,550 --> 00:43:17,460
+do when something goes wrong ok so
+
+977
+00:43:17,460 --> 00:43:19,990
+suppose for example that I have
+
+978
+00:43:19,990 --> 00:43:24,790
+the bug in my program and I made my
+
+979
+00:43:24,790 --> 00:43:26,980
+program fetch you know a piece of data
+
+980
+00:43:26,980 --> 00:43:30,910
+as if it was an instruction okay if I do
+
+981
+00:43:30,910 --> 00:43:32,680
+something like that then it's possible
+
+982
+00:43:32,680 --> 00:43:35,410
+that when I try to decode my opcode it's
+
+983
+00:43:35,410 --> 00:43:37,600
+going to math to some opcode that
+
+984
+00:43:37,600 --> 00:43:40,570
+doesn't even exist right so I need to be
+
+985
+00:43:40,570 --> 00:43:42,850
+able to do something reasonable in that
+
+986
+00:43:42,850 --> 00:43:45,640
+situation another type of problem that
+
+987
+00:43:45,640 --> 00:43:47,560
+can happen is suppose that I did my
+
+988
+00:43:47,560 --> 00:43:50,890
+calculation for my address of my memory
+
+989
+00:43:50,890 --> 00:43:53,380
+okay I added a register in some constant
+
+990
+00:43:53,380 --> 00:43:56,200
+and I produced a value and I ended up
+
+991
+00:43:56,200 --> 00:43:58,540
+somehow producing a value that's larger
+
+992
+00:43:58,540 --> 00:44:01,119
+than the size of my memory okay again
+
+993
+00:44:01,119 --> 00:44:03,220
+not something I can handle in my
+
+994
+00:44:03,220 --> 00:44:05,140
+hardware so we need to have a way of
+
+995
+00:44:05,140 --> 00:44:06,940
+dealing with that another type of
+
+996
+00:44:06,940 --> 00:44:09,160
+problem might be suppose that I try to
+
+997
+00:44:09,160 --> 00:44:11,740
+do a divide by 0 something that I can't
+
+998
+00:44:11,740 --> 00:44:15,490
+do other things that I might need to
+
+999
+00:44:15,490 --> 00:44:17,260
+deal with are things that aren't
+
+1000
+00:44:17,260 --> 00:44:19,080
+actually caused by the program itself
+
+1001
+00:44:19,080 --> 00:44:22,150
+suppose there's an external event like a
+
+1002
+00:44:22,150 --> 00:44:24,310
+user hits a key on the keyboard
+
+1003
+00:44:24,310 --> 00:44:27,070
+I might have to respond to the fact that
+
+1004
+00:44:27,070 --> 00:44:29,200
+the user wants me to you know notice
+
+1005
+00:44:29,200 --> 00:44:32,500
+that I that they hit a key and so that
+
+1006
+00:44:32,500 --> 00:44:33,930
+is going to be dealt with through
+
+1007
+00:44:33,930 --> 00:44:37,990
+exceptions as well and so the way that
+
+1008
+00:44:37,990 --> 00:44:39,609
+we're going to handle exceptions is
+
+1009
+00:44:39,609 --> 00:44:44,020
+we're going to basically do an implicit
+
+1010
+00:44:44,020 --> 00:44:46,090
+procedure call we're gonna force a
+
+1011
+00:44:46,090 --> 00:44:48,700
+procedure call to a special handler
+
+1012
+00:44:48,700 --> 00:44:51,310
+which is part of our software and we're
+
+1013
+00:44:51,310 --> 00:44:52,540
+gonna have two different kinds of
+
+1014
+00:44:52,540 --> 00:44:56,200
+handlers one is going to be for these
+
+1015
+00:44:56,200 --> 00:44:58,570
+cases over here which are called by our
+
+1016
+00:44:58,570 --> 00:45:00,400
+program and another handler is going to
+
+1017
+00:45:00,400 --> 00:45:02,170
+be for these cases over here which are
+
+1018
+00:45:02,170 --> 00:45:07,600
+external events and the great benefit of
+
+1019
+00:45:07,600 --> 00:45:09,850
+all of this is that we can do this in a
+
+1020
+00:45:09,850 --> 00:45:11,740
+way that's completely transparent to our
+
+1021
+00:45:11,740 --> 00:45:14,590
+program ok so what we would do is we
+
+1022
+00:45:14,590 --> 00:45:16,570
+would interrupt our program we would go
+
+1023
+00:45:16,570 --> 00:45:18,640
+off into the software handle whatever
+
+1024
+00:45:18,640 --> 00:45:21,780
+problem it is that we have or even
+
+1025
+00:45:21,780 --> 00:45:23,950
+execute an instruction that doesn't
+
+1026
+00:45:23,950 --> 00:45:25,390
+exist in our instruction set
+
+1027
+00:45:25,390 --> 00:45:27,160
+architecture and then we would come back
+
+1028
+00:45:27,160 --> 00:45:31,320
+to our program as if nothing happened
+
+1029
+00:45:31,380 --> 00:45:33,540
+so though you know one of the main
+
+1030
+00:45:33,540 --> 00:45:35,490
+benefits of this is that you could in
+
+1031
+00:45:35,490 --> 00:45:37,770
+this way also make your instruction set
+
+1032
+00:45:37,770 --> 00:45:39,510
+architecture more complicated without
+
+1033
+00:45:39,510 --> 00:45:41,940
+actually complicating the hardware of
+
+1034
+00:45:41,940 --> 00:45:47,280
+the processor that you build ok so our
+
+1035
+00:45:47,280 --> 00:45:51,000
+plan for handling exceptions is we're
+
+1036
+00:45:51,000 --> 00:45:52,740
+going to interrupt the program we're
+
+1037
+00:45:52,740 --> 00:45:55,560
+going to invoke this procedure call
+
+1038
+00:45:55,560 --> 00:45:57,590
+which is going to be a handler for our
+
+1039
+00:45:57,590 --> 00:46:00,360
+exception and then when we're done we're
+
+1040
+00:46:00,360 --> 00:46:03,060
+going to continue with execution where
+
+1041
+00:46:03,060 --> 00:46:06,750
+we left off and so I just briefly
+
+1042
+00:46:06,750 --> 00:46:09,180
+mentioned that we kind of have two
+
+1043
+00:46:09,180 --> 00:46:11,490
+situations we want to deal with we'll
+
+1044
+00:46:11,490 --> 00:46:14,130
+call the first one exceptions which are
+
+1045
+00:46:14,130 --> 00:46:15,810
+synchronous events there are the ones
+
+1046
+00:46:15,810 --> 00:46:17,490
+that are caused by the program doing
+
+1047
+00:46:17,490 --> 00:46:20,250
+something wrong so if I try to access an
+
+1048
+00:46:20,250 --> 00:46:22,620
+invalid address in memory or if I try to
+
+1049
+00:46:22,620 --> 00:46:25,320
+do a divide by 0 or I try to you know do
+
+1050
+00:46:25,320 --> 00:46:27,270
+something that's an invalid opcode those
+
+1051
+00:46:27,270 --> 00:46:29,790
+would all fall into this category the
+
+1052
+00:46:29,790 --> 00:46:31,740
+second type are interrupts where there's
+
+1053
+00:46:31,740 --> 00:46:34,380
+some asynchronous events like a user you
+
+1054
+00:46:34,380 --> 00:46:36,720
+know hitting a key on a keyboard and I
+
+1055
+00:46:36,720 --> 00:46:39,000
+need to handle those situations as well
+
+1056
+00:46:39,000 --> 00:46:42,180
+and so I'll have two different handlers
+
+1057
+00:46:42,180 --> 00:46:47,160
+one for each one of these two cases okay
+
+1058
+00:46:47,160 --> 00:46:50,250
+so the way that we're going to handle it
+
+1059
+00:46:50,250 --> 00:46:52,590
+is the first thing I'm going to do is
+
+1060
+00:46:52,590 --> 00:46:55,620
+I'm going to save my PC plus for value
+
+1061
+00:46:55,620 --> 00:46:57,870
+so that I can come back to where I left
+
+1062
+00:46:57,870 --> 00:47:01,050
+off and then we're going to load the PC
+
+1063
+00:47:01,050 --> 00:47:03,690
+with the address that's going to get me
+
+1064
+00:47:03,690 --> 00:47:06,090
+to that Handler and so that address is
+
+1065
+00:47:06,090 --> 00:47:07,770
+going to be for for synchronous events
+
+1066
+00:47:07,770 --> 00:47:10,590
+and eight for asynchronous events and
+
+1067
+00:47:10,590 --> 00:47:13,200
+then from these addresses we'll probably
+
+1068
+00:47:13,200 --> 00:47:15,900
+will have a jump instruction to the
+
+1069
+00:47:15,900 --> 00:47:21,360
+appropriate handler so we finally
+
+1070
+00:47:21,360 --> 00:47:23,070
+introduced register r30
+
+1071
+00:47:23,070 --> 00:47:24,660
+in case some of you were wondering if we
+
+1072
+00:47:24,660 --> 00:47:26,000
+were ever going to make use of it
+
+1073
+00:47:26,000 --> 00:47:28,800
+register r30 is what we call the
+
+1074
+00:47:28,800 --> 00:47:31,350
+exception pointer okay so we use this
+
+1075
+00:47:31,350 --> 00:47:34,350
+register in order to store that PC plus
+
+1076
+00:47:34,350 --> 00:47:37,050
+for value so that we can come back to
+
+1077
+00:47:37,050 --> 00:47:40,140
+our to our program after we're done
+
+1078
+00:47:40,140 --> 00:47:44,170
+dealing with the with the exception
+
+1079
+00:47:44,170 --> 00:47:47,619
+you because it's possible to get an
+
+1080
+00:47:47,619 --> 00:47:50,440
+exception at any point in time which
+
+1081
+00:47:50,440 --> 00:47:51,940
+would immediately overwrite your
+
+1082
+00:47:51,940 --> 00:47:53,890
+exception pointer you have to make sure
+
+1083
+00:47:53,890 --> 00:47:56,109
+that your user programs do not try to
+
+1084
+00:47:56,109 --> 00:47:58,299
+use the exception pointer as a regular
+
+1085
+00:47:58,299 --> 00:48:02,559
+register okay so a quick example of how
+
+1086
+00:48:02,559 --> 00:48:04,540
+this would work suppose I have a piece
+
+1087
+00:48:04,540 --> 00:48:07,540
+of code here and I try to execute a div
+
+1088
+00:48:07,540 --> 00:48:09,910
+operation and divide which I didn't
+
+1089
+00:48:09,910 --> 00:48:12,250
+actually implement in my hardware so
+
+1090
+00:48:12,250 --> 00:48:15,309
+what would happen is I would cause a
+
+1091
+00:48:15,309 --> 00:48:17,829
+call to my software which branches
+
+1092
+00:48:17,829 --> 00:48:20,170
+basically to this handler from my ill op
+
+1093
+00:48:20,170 --> 00:48:23,500
+stands for illegal operation handler I
+
+1094
+00:48:23,500 --> 00:48:26,680
+would save my XP I would then figure out
+
+1095
+00:48:26,680 --> 00:48:28,630
+which instruction it is that caused a
+
+1096
+00:48:28,630 --> 00:48:31,240
+problem by looking at my memory in the
+
+1097
+00:48:31,240 --> 00:48:33,970
+location pointed to by the contents of
+
+1098
+00:48:33,970 --> 00:48:37,270
+XP minus 4 which is right with just
+
+1099
+00:48:37,270 --> 00:48:39,579
+stored PC plus 4 into it so I subtract
+
+1100
+00:48:39,579 --> 00:48:41,890
+it to get the actual div instruction and
+
+1101
+00:48:41,890 --> 00:48:44,020
+once I know that then I can actually go
+
+1102
+00:48:44,020 --> 00:48:46,240
+ahead and implement this instruction in
+
+1103
+00:48:46,240 --> 00:48:48,160
+software I know the source and
+
+1104
+00:48:48,160 --> 00:48:49,839
+destination operands and so I can
+
+1105
+00:48:49,839 --> 00:48:52,030
+actually do everything that I need to do
+
+1106
+00:48:52,030 --> 00:48:55,930
+once I'm done I pop my XP register and I
+
+1107
+00:48:55,930 --> 00:48:59,440
+jump back there so that I can continue
+
+1108
+00:48:59,440 --> 00:49:03,490
+execution of my program ok now note that
+
+1109
+00:49:03,490 --> 00:49:06,369
+in the case where you're dealing with an
+
+1110
+00:49:06,369 --> 00:49:09,849
+asynchronous event you're going to want
+
+1111
+00:49:09,849 --> 00:49:13,089
+to actually decrement the value of XP to
+
+1112
+00:49:13,089 --> 00:49:14,920
+go back to the instruction that it never
+
+1113
+00:49:14,920 --> 00:49:17,680
+actually executed and and re execute it
+
+1114
+00:49:17,680 --> 00:49:19,390
+so you would have to you know put XP
+
+1115
+00:49:19,390 --> 00:49:23,020
+minus 4 into your XP register before you
+
+1116
+00:49:23,020 --> 00:49:27,220
+jump to it ok and so very quickly what
+
+1117
+00:49:27,220 --> 00:49:28,660
+does our hardware look like to support
+
+1118
+00:49:28,660 --> 00:49:31,660
+this we add another multiplexer here
+
+1119
+00:49:31,660 --> 00:49:33,790
+which controls what gets written which
+
+1120
+00:49:33,790 --> 00:49:35,500
+register gets written in our register
+
+1121
+00:49:35,500 --> 00:49:38,130
+file we call this the W a select
+
+1122
+00:49:38,130 --> 00:49:41,170
+multiplexer and when it's 1 it may it
+
+1123
+00:49:41,170 --> 00:49:43,270
+selects the register to write to as the
+
+1124
+00:49:43,270 --> 00:49:47,530
+X P register we also have two additional
+
+1125
+00:49:47,530 --> 00:49:51,339
+inputs to our PC cell MUX and so we we
+
+1126
+00:49:51,339 --> 00:49:53,799
+send a long address for for if it's an
+
+1127
+00:49:53,799 --> 00:49:56,200
+illegal operation and address eight if
+
+1128
+00:49:56,200 --> 00:49:57,640
+we have an ace
+
+1129
+00:49:57,640 --> 00:50:01,720
+this type of exception and we need to
+
+1130
+00:50:01,720 --> 00:50:04,630
+produce the right value of her w a
+
+1131
+00:50:04,630 --> 00:50:08,220
+select in our control logic based on
+
+1132
+00:50:08,220 --> 00:50:11,619
+either the fact that we you know that we
+
+1133
+00:50:11,619 --> 00:50:14,260
+figured out that it's an illegal opcode
+
+1134
+00:50:14,260 --> 00:50:17,019
+or the fact that we got an external
+
+1135
+00:50:17,019 --> 00:50:19,750
+interrupt request which tells us that
+
+1136
+00:50:19,750 --> 00:50:21,970
+something like you know hitting a key on
+
+1137
+00:50:21,970 --> 00:50:26,769
+a keyboard just occurred and so oops
+
+1138
+00:50:26,769 --> 00:50:29,769
+sorry so if we take a look at what needs
+
+1139
+00:50:29,769 --> 00:50:32,079
+to happen in the hardware for this we're
+
+1140
+00:50:32,079 --> 00:50:34,119
+going to store the value of PC plus 4
+
+1141
+00:50:34,119 --> 00:50:37,000
+into our XP registered so PC plus 4
+
+1142
+00:50:37,000 --> 00:50:40,150
+comes in right here W deselect equals 0
+
+1143
+00:50:40,150 --> 00:50:42,880
+that sends the PC plus 4 value over here
+
+1144
+00:50:42,880 --> 00:50:45,339
+I set were fee equal to 1 and remember I
+
+1145
+00:50:45,339 --> 00:50:47,950
+had to make W a Cell equal to 1 in order
+
+1146
+00:50:47,950 --> 00:50:50,380
+to make my destination register be XP
+
+1147
+00:50:50,380 --> 00:50:54,490
+and finally my PC cell is going to be
+
+1148
+00:50:54,490 --> 00:50:56,920
+either 3 or 4 depending on whether it
+
+1149
+00:50:56,920 --> 00:50:59,609
+was an illegal operation or an exception
+
+1150
+00:50:59,609 --> 00:51:02,859
+and then the rest of them again are
+
+1151
+00:51:02,859 --> 00:51:07,359
+don't cares except for the MWR so that's
+
+1152
+00:51:07,359 --> 00:51:10,750
+basically our full solution and here we
+
+1153
+00:51:10,750 --> 00:51:12,609
+just show a summary of all of these
+
+1154
+00:51:12,609 --> 00:51:14,380
+control signals that we just talked
+
+1155
+00:51:14,380 --> 00:51:17,319
+about for every single type of operation
+
+1156
+00:51:17,319 --> 00:51:19,690
+that we might need to execute on our
+
+1157
+00:51:19,690 --> 00:51:22,420
+beta and so just a couple lines that we
+
+1158
+00:51:22,420 --> 00:51:24,849
+want to point out are specifically the
+
+1159
+00:51:24,849 --> 00:51:27,700
+MWR note that there's no don't cares
+
+1160
+00:51:27,700 --> 00:51:30,789
+here ok this is always set to either 0
+
+1161
+00:51:30,789 --> 00:51:32,980
+if you don't want to read it to it from
+
+1162
+00:51:32,980 --> 00:51:35,589
+your sorry if you don't want to write to
+
+1163
+00:51:35,589 --> 00:51:37,390
+your memory or 1 when you're doing a
+
+1164
+00:51:37,390 --> 00:51:40,930
+store and similarly worth is also always
+
+1165
+00:51:40,930 --> 00:51:43,720
+0 or 1 except for in the case of a reset
+
+1166
+00:51:43,720 --> 00:51:45,759
+where we kind of assume that we don't
+
+1167
+00:51:45,759 --> 00:51:47,230
+need to maintain the state of our
+
+1168
+00:51:47,230 --> 00:51:50,829
+registers if we're doing a reset ok any
+
+1169
+00:51:50,829 --> 00:51:51,810
+questions
+
+1170
+00:51:51,810 --> 00:51:54,070
+all right we'll have fun building your
+
+1171
+00:51:54,070 --> 00:51:56,310
+baby
+
