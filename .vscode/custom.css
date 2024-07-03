@@ -1,0 +1,9 @@
+.monaco-workbench .part.statusbar {
+    height: 30px; /* Adjust this value as needed */
+    font-size: 14px; /* Adjust this value as needed */
+}
+
+.monaco-workbench .part.statusbar > .items-container > .statusbar-item {
+    height: 30px; /* Adjust this value as needed */
+    line-height: 30px; /* Adjust this value as needed */
+}

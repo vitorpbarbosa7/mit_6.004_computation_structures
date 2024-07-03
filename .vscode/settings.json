@@ -1,4 +1,9 @@
 {
+  "window.zoomLevel": 0,
+  "editor.fontSize": 14,
+
+
+
   "C_Cpp_Runner.cCompilerPath": "clang",
   "C_Cpp_Runner.cppCompilerPath": "clang++",
   "C_Cpp_Runner.debuggerPath": "lldb",
