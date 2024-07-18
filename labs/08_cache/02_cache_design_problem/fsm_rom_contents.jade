@@ -1,0 +1,25 @@
+state[1:0]
+rdy = 00
+r1 = 01
+r2 = 10
+
+
+state[1:0] miss nstate[1:0] irdy cwe
+
+00 0 00 1 0
+00 1 01 0 0
+01 - 01 0 0 
+01 - 01 0 0 
+10 - 00 1 1
+10 - 00 1 1
+
+
+
+// this is the answer, the first one is the first row, the second the second row
+// each row corresponds to the inputs and the outputs are what is written
+0b00_1_0
+0b01_0_0
+0b10_0_0
+0b10_0_0
+0b00_1_1
+0b00_1_1
