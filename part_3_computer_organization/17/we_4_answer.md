@@ -1,0 +1,1 @@
+False. Kernel code cannot be interrupted by user processes on the Beta, and the sampling would not capture kernel addresses because the sampling is done in user space.
