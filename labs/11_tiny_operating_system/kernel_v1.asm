@@ -131,13 +131,17 @@ I_BadInt:
 // With this we can use a Supervisor Call (like for keyboard and mouse interrupts)
 I_IllOp:
         SAVESTATE()             // Save all machine state when Illegal op is called
+		// must go to kernel, he has the handlers to know what to do ?
         LD(KStack, SP)          // Install kernel stack pointer.
-
+		
+		// save next instruction we would execute in usermode
         SUBC(XP, 4, r0)         // u-mode address of illegal instruction
+		// need to convert to the real address not the virtual address from each user program?
         CALL(MapUserAddress)    // convert to k-mode address
         LD(r0, 0, r0)           // Fetch the illegal instruction
         SHRC(r0, 26, r0)        // Extract the 6-bit OPCODE
         SHLC(r0, 2, r0)         // Make it a WORD (4-byte) index
+		// now we jump to where the handlers are according the opcode
         LD(r0, UUOTbl, r0)      // Fetch UUOTbl[OPCODE]
         JMP(r0)                 // and dispatch to the UUO handler.
 
@@ -161,6 +165,8 @@ UUOTbl: BAD()           UUO(SVC_UUO)    BAD()           BAD()
         BAD()           BAD()           BAD()           BAD()
         BAD()           BAD()           BAD()           BAD()
 
+// Kernel Panic (KP)
+// BSOD (Blue Screen of Death)
 // Here's the handler for truly unused opcodes (not SVCs):
 UUOError:
         CALL(KWrMsg)                    // Type out an error msg,
@@ -179,6 +185,7 @@ UUOError:
 // Restore registers, and jump back to the interrupted user-mode
 // program.
 
+// Okay, we did what sould be done by the kernel, then go back friendly to the user mode
 I_Rtn:  RESTORESTATE()
 kexit:  JMP(XP)                 // Good place for debugging breakpoint!
 
@@ -190,7 +197,8 @@ kexit:  JMP(XP)                 // Good place for debugging breakpoint!
 I_Wait: LD(UserMState+(4*30), r0)       // Grab XP from saved MState,
         SUBC(r0, 4, r0)                 // back it up to point to
         ST(r0, UserMState+(4*30))       //    SVC instruction
-
+		
+		// Timesharing is implemented here?
         CALL(Scheduler)                 // Switch current process,
         BR(I_Rtn)                       // and return to (some) user.
 
@@ -205,13 +213,18 @@ SVC_UUO:
         LD(r0, SVCTbl, r0)      // and fetch the table entry.
         JMP(r0)
 
+// Some supervisor calls
 SVCTbl: UUO(HaltH)              // SVC(0): User-mode HALT instruction
         UUO(WrMsgH)             // SVC(1): Write message
         UUO(WrChH)              // SVC(2): Write Character
         UUO(GetKeyH)            // SVC(3): Get Key
         UUO(HexPrtH)            // SVC(4): Hex Print
+		
+		// Our friend Semaphores. To make impossible to execute two codes in a non allowed sequence
         UUO(WaitH)              // SVC(5): Wait(S), S in R0
         UUO(SignalH)            // SVC(6): Signal(S), S in R0
+		
+		// Go back to another process, I finished my work here, use the clock now
         UUO(YieldH)             // SVC(7): Yield()
 
 /// Definitions of macros used to interface with Kernel code:
@@ -229,19 +242,28 @@ SVCTbl: UUO(HaltH)              // SVC(0): User-mode HALT instruction
 // Keyboard handling
 ////////////////////////////////////////////////////////////////////////
 
+// only one char allowed in the keyboard buffer
 Key_State: LONG(0)                      // 1-char keyboard buffer.
 
+//I_Kbd fills the Key_State buffer when a key is pressed.
+
+// User requested key (Software interrupt)
+// what is the key
 GetKeyH:                                // return key code in r0, or block
+		// if there is a key pressed, so we can save it on r0?
         LD(Key_State, r0)
         BEQ(r0, I_Wait)                 // on 0, just wait a while
 
 // key ready, return it and clear the key buffer
         LD(Key_State, r0)               // Fetch character to return
+		
+// Now the user can access this keyboard from the R0
+// Our kernel saved it and gave it to the User Process
         ST(r0, UserMState)              // return it in R0.
         ST(r31, Key_State)              // Clear kbd buffer
         BR(I_Rtn)                       // and return to user.
 
-
+// Keyboard key as pressed (Hardware interrupt)
 // Interrupt side: read key, store it into buffer.
 // NB: This is a LIGHTWEIGHT interrupt handler, which doesn't
 //   do a full state save.  It doesn't have to, since (1) it
