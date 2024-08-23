@@ -86,7 +86,7 @@ UserMState:
         SS(0)  SS(1)  SS(2)  SS(3)  SS(4)  SS(5)  SS(6)  SS(7)
         SS(8)  SS(9)  SS(10) SS(11) SS(12) SS(13) SS(14) SS(15)
         SS(16) SS(17) SS(18) SS(19) SS(20) SS(21) SS(22) SS(23)
-        SS(24) SS(25) SS(26) SS(27) SS(28) SS(29) SS(30) }
+        SS(24) SS(25) SS(26) SS(27) SS(28) SS(29) SS(30)}
 
 // See comment for SS(R), above
 .macro RS(R) LD(UserMState+(4*R), R)    // (Auxiliary macro)
@@ -128,20 +128,17 @@ I_BadInt:
 ///  (including SVCs)
 //////////////////////////////////////////////////////////////////////////////
 
-// With this we can use a Supervisor Call (like for keyboard and mouse interrupts)
 I_IllOp:
-        SAVESTATE()             // Save all machine state when Illegal op is called
-		// must go to kernel, he has the handlers to know what to do ?
+        SAVESTATE()             // Save the machine state.
+		.breakpoint
         LD(KStack, SP)          // Install kernel stack pointer.
-		
-		// save next instruction we would execute in usermode
+
         SUBC(XP, 4, r0)         // u-mode address of illegal instruction
-		// need to convert to the real address not the virtual address from each user program?
+		.breakpoint
         CALL(MapUserAddress)    // convert to k-mode address
         LD(r0, 0, r0)           // Fetch the illegal instruction
         SHRC(r0, 26, r0)        // Extract the 6-bit OPCODE
         SHLC(r0, 2, r0)         // Make it a WORD (4-byte) index
-		// now we jump to where the handlers are according the opcode
         LD(r0, UUOTbl, r0)      // Fetch UUOTbl[OPCODE]
         JMP(r0)                 // and dispatch to the UUO handler.
 
@@ -165,8 +162,6 @@ UUOTbl: BAD()           UUO(SVC_UUO)    BAD()           BAD()
         BAD()           BAD()           BAD()           BAD()
         BAD()           BAD()           BAD()           BAD()
 
-// Kernel Panic (KP)
-// BSOD (Blue Screen of Death)
 // Here's the handler for truly unused opcodes (not SVCs):
 UUOError:
         CALL(KWrMsg)                    // Type out an error msg,
@@ -185,7 +180,6 @@ UUOError:
 // Restore registers, and jump back to the interrupted user-mode
 // program.
 
-// Okay, we did what sould be done by the kernel, then go back friendly to the user mode
 I_Rtn:  RESTORESTATE()
 kexit:  JMP(XP)                 // Good place for debugging breakpoint!
 
@@ -197,8 +191,7 @@ kexit:  JMP(XP)                 // Good place for debugging breakpoint!
 I_Wait: LD(UserMState+(4*30), r0)       // Grab XP from saved MState,
         SUBC(r0, 4, r0)                 // back it up to point to
         ST(r0, UserMState+(4*30))       //    SVC instruction
-		
-		// Timesharing is implemented here?
+
         CALL(Scheduler)                 // Switch current process,
         BR(I_Rtn)                       // and return to (some) user.
 
@@ -213,18 +206,13 @@ SVC_UUO:
         LD(r0, SVCTbl, r0)      // and fetch the table entry.
         JMP(r0)
 
-// Some supervisor calls
 SVCTbl: UUO(HaltH)              // SVC(0): User-mode HALT instruction
         UUO(WrMsgH)             // SVC(1): Write message
         UUO(WrChH)              // SVC(2): Write Character
         UUO(GetKeyH)            // SVC(3): Get Key
         UUO(HexPrtH)            // SVC(4): Hex Print
-		
-		// Our friend Semaphores. To make impossible to execute two codes in a non allowed sequence
         UUO(WaitH)              // SVC(5): Wait(S), S in R0
         UUO(SignalH)            // SVC(6): Signal(S), S in R0
-		
-		// Go back to another process, I finished my work here, use the clock now
         UUO(YieldH)             // SVC(7): Yield()
 
 /// Definitions of macros used to interface with Kernel code:
@@ -242,28 +230,19 @@ SVCTbl: UUO(HaltH)              // SVC(0): User-mode HALT instruction
 // Keyboard handling
 ////////////////////////////////////////////////////////////////////////
 
-// only one char allowed in the keyboard buffer
 Key_State: LONG(0)                      // 1-char keyboard buffer.
 
-//I_Kbd fills the Key_State buffer when a key is pressed.
-
-// User requested key (Software interrupt)
-// what is the key
 GetKeyH:                                // return key code in r0, or block
-		// if there is a key pressed, so we can save it on r0?
         LD(Key_State, r0)
         BEQ(r0, I_Wait)                 // on 0, just wait a while
 
 // key ready, return it and clear the key buffer
         LD(Key_State, r0)               // Fetch character to return
-		
-// Now the user can access this keyboard from the R0
-// Our kernel saved it and gave it to the User Process
         ST(r0, UserMState)              // return it in R0.
         ST(r31, Key_State)              // Clear kbd buffer
         BR(I_Rtn)                       // and return to user.
 
-// Keyboard key as pressed (Hardware interrupt)
+
 // Interrupt side: read key, store it into buffer.
 // NB: This is a LIGHTWEIGHT interrupt handler, which doesn't
 //   do a full state save.  It doesn't have to, since (1) it
@@ -561,6 +540,7 @@ WrEnd:
 .segment P0                     // start a new user-mode segment
 . = 0
         CMOVE(Stack, sp)
+.breakpoint
 
 Start:
         WrMsg()
@@ -626,6 +606,11 @@ Spc1:   WrMsg()                 // Add the "AY" suffix.
 
         BR(Read)                // ... and start another word.
 
+// SCII Background:
+// In the ASCII table:
+// Lowercase letters 'a' to 'z' have consecutive values from 97 to 122.
+// Uppercase letters 'A' to 'Z' have consecutive values from 65 to 90.
+// The difference between the lowercase and uppercase letters for any given letter is constant: 'a' - 'A' = 32.
 // Auxilliary routine: convert char in r0 to upper case:
 UCase:  PUSH(r1)
         CMPLEC(r0,'z',r1)       // Is it beyond 'z'?
@@ -661,8 +646,11 @@ Stack:  STORAGE(256)            // storage for stack
         CMOVE(Stack,SP)
 
 Start:
+		// Load global value of Count?
         LD(Count, r0)          // Another quantum, incr count3.
+		// Increment it
         ADDC(r0,1,r0)
+		// Store back in its address
         ST(r0,Count)
 
         ANDC(r0,0xFFF,r1)      // print out message once every 4K iterations
