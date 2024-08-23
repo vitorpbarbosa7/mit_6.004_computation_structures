@@ -130,7 +130,6 @@ I_BadInt:
 
 I_IllOp:
         SAVESTATE()             // Save the machine state.
-		.breakpoint
         LD(KStack, SP)          // Install kernel stack pointer.
 
 		// The next instruction to be executed would be the XP, we will go back there later
@@ -139,7 +138,6 @@ I_IllOp:
 		// So lets just use the recipe to translate back to kernel mode
 		// because now we'll be in kernel mode to handle the exception
         SUBC(XP, 4, r0)         // u-mode address of illegal instruction
-		.breakpoint
         CALL(MapUserAddress)    // convert to k-mode address
         LD(r0, 0, r0)           // Fetch the illegal instruction
         SHRC(r0, 26, r0)        // Extract the 6-bit OPCODE
@@ -354,9 +352,17 @@ CopyMState:
 // This procedure emulates in software what the MMU does in hardware: 
 // converting a user-mode virtual address to the corresponding physical address.
 MapUserAddress:
-		.breakpoint
-        // [Design Problem 1] your code here...
-        JMP(LP)    // return to caller
+		PUSH(R1) // use this register in the procedure
+		LD(CurProc, r1) // load currentprocess state base register address into r1
+		LD(r1, 31*3, r1) // from him we can find seg_base
+		// make the conversion adding the r0 user mode virtual space
+		// to the physical space kernel will use, with the add of seg_base + r0
+		ADD(r0, r1, r0) 
+		// return the r0
+		
+		// restore the r1 value after the procedure is run
+		POP(R1)
+        JMP(LP)                   // Return to the caller
 
 //////////////////////////////////////////////////////////////////////////////
 /// Clock interrupt handler:  Invoke the scheduler.
@@ -549,7 +555,6 @@ WrEnd:
 .segment P0                     // start a new user-mode segment
 . = 0
         CMOVE(Stack, sp)
-.breakpoint
 
 Start:
         WrMsg()
