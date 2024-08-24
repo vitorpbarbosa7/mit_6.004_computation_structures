@@ -83,10 +83,11 @@ UserMState:
 .macro SS(R) ST(R, UserMState+(4*R))    // (Auxiliary macro)
 
 .macro SAVESTATE() {
+		.breakpoint
         SS(0)  SS(1)  SS(2)  SS(3)  SS(4)  SS(5)  SS(6)  SS(7)
         SS(8)  SS(9)  SS(10) SS(11) SS(12) SS(13) SS(14) SS(15)
         SS(16) SS(17) SS(18) SS(19) SS(20) SS(21) SS(22) SS(23)
-        SS(24) SS(25) SS(26) SS(27) SS(28) SS(29) SS(30)}
+        SS(24) SS(25) SS(26) SS(27) SS(28) SS(29) SS(30) .breakpoint}
 
 // See comment for SS(R), above
 .macro RS(R) LD(UserMState+(4*R), R)    // (Auxiliary macro)
@@ -148,6 +149,7 @@ I_IllOp:
 .macro UUO(ADR) LONG(ADR+PC_SUPERVISOR) // Auxiliary Macros
 .macro BAD()    UUO(UUOError)
 
+// we will always reach the SVC_UUO?
 UUOTbl: BAD()           UUO(SVC_UUO)    BAD()           BAD()
         BAD()           BAD()           BAD()           BAD()
         BAD()           BAD()           BAD()           BAD()
@@ -295,15 +297,30 @@ HexPrtH:
 // The kernel variable CurProc always points to the ProcTbl entry
 //  corresponding to the "swapped in" process.
 
+// Where do the appropriate base and bound values come from? 
+// They are determined at assembly time. To enter code and data for a user-mode process,
+// use the .segment XXX directive to tell the assembler to start a new user-mode 
+// segment called XXX. Each user-mode segment has its own symbol table and is assumed 
+// to start at virtual address 0. Here's a very simple user-mode process that initializes a stack, 
+// then enters an infinite loop incrementing a counter in main memory:
+
 ProcTbl:
+		// 0 - 29 spaces (4 byte word always)
         STORAGE(30)             // Process 0: R0-R29
+		// 30 space ( 4 byte word)
         LONG(0)                 // Process 0: XP (= PC)
+		// 31
         LONG(P0_base)           // Process 0: base address
+		// 32
         LONG(P0_bounds)         // Process 0: bounds
 
+		// 0 - 29
         STORAGE(30)             // Process 1: R0-R29
+		// 30
         LONG(0)                 // Process 1: XP (= PC)
+		// 31
         LONG(P1_base)           // Process 1: base address
+		// 32
         LONG(P1_bounds)         // Process 1: bounds
 
 CurProc: LONG(ProcTbl)
@@ -318,6 +335,7 @@ Scheduler:
         CALL(CopyMState)                // Copy UserMState -> CurProc
 
         LD(CurProc, r0)
+		.breakpoint
         ADDC(r0, 4*33, r0)              // Increment to next process..
         CMPLTC(r0,CurProc, r1)          // End of ProcTbl?
         BT(r1, Sched1)                  // Nope, its OK.
@@ -353,14 +371,19 @@ CopyMState:
 // converting a user-mode virtual address to the corresponding physical address.
 MapUserAddress:
 		PUSH(R1) // use this register in the procedure
+		PUSH(R2)
 		LD(CurProc, r1) // load currentprocess state base register address into r1
-		LD(r1, 31*3, r1) // from him we can find seg_base
+		.breakpoint
+		//debug sum
+		ADDC(r1, 31*4, r2)
+		LD(r1, 31*4, r1) // from him we can find seg_base (31th from r1)
 		// make the conversion adding the r0 user mode virtual space
 		// to the physical space kernel will use, with the add of seg_base + r0
 		ADD(r0, r1, r0) 
 		// return the r0
 		
 		// restore the r1 value after the procedure is run
+		POP(R2)
 		POP(R1)
         JMP(LP)                   // Return to the caller
 
@@ -528,6 +551,7 @@ KMsgAux:
 
         MOVE (R0, R1)
 
+// go fetching each character code, and send this signal to the display with the WRCHAR()	
 WrWord: LD (R1, 0, R2)          // Fetch a 4-byte word into R2
         ADDC (R1, 4, R1)        // Increment word pointer
         CMOVE(4,r3)             // Byte/word counter
@@ -538,6 +562,7 @@ WrByte: ANDC(r2, 0x7F, r0)      // Grab next byte -- LOW end first!
         SRAC(r2,8,r2)           // Shift out this byte
         SUBC(r3,1,r3)           // Count down... done with this word?
         BNE(r3,WrByte)          // Nope, continue.
+		.breakpoint
         BR(WrWord)              // Yup, on to next.
 
 WrEnd:
@@ -552,11 +577,18 @@ WrEnd:
 /// User-mode code: Process 0
 //////////////////////////////////////////////////////////////////////////////
 
+// Where do the appropriate base and bound values come from? 
+// They are determined at assembly time. To enter code and data for a user-mode process,
+// use the .segment XXX directive to tell the assembler to start a new user-mode 
+// segment called XXX. Each user-mode segment has its own symbol table and is assumed 
+// to start at virtual address 0. Here's a very simple user-mode process that initializes a stack, 
+// then enters an infinite loop incrementing a counter in main memory:
 .segment P0                     // start a new user-mode segment
 . = 0
         CMOVE(Stack, sp)
 
 Start:
+		.breakpoint
         WrMsg()
         .text "Start typing, Bunky.\n\n"
 
@@ -660,6 +692,7 @@ Stack:  STORAGE(256)            // storage for stack
         CMOVE(Stack,SP)
 
 Start:
+		.breakpoint
 		// Load global value of Count?
         LD(Count, r0)          // Another quantum, incr count3.
 		// Increment it
