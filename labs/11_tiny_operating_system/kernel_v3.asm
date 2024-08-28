@@ -83,11 +83,10 @@ UserMState:
 .macro SS(R) ST(R, UserMState+(4*R))    // (Auxiliary macro)
 
 .macro SAVESTATE() {
-        .breakpoint
         SS(0)  SS(1)  SS(2)  SS(3)  SS(4)  SS(5)  SS(6)  SS(7)
         SS(8)  SS(9)  SS(10) SS(11) SS(12) SS(13) SS(14) SS(15)
         SS(16) SS(17) SS(18) SS(19) SS(20) SS(21) SS(22) SS(23)
-        SS(24) SS(25) SS(26) SS(27) SS(28) SS(29) SS(30) .breakpoint}
+        SS(24) SS(25) SS(26) SS(27) SS(28) SS(29) SS(30) }
 
 // See comment for SS(R), above
 .macro RS(R) LD(UserMState+(4*R), R)    // (Auxiliary macro)
@@ -118,11 +117,38 @@ I_SegFault:
 /// Handler for unexpected interrupts
 //////////////////////////////////////////////////////////////////////////////
 
-I_BadInt:
-        CALL(KWrMsg)                    // Type out an error msg,
-        .text "Unexpected interrupt..."
-        HALT()
-        
+Click_State: LONG(-1)                   // -1 since last click excuted.
+
+I_BadInt: ENTER_INTERRUPT()             // Adjust the PC!
+        ST(r0, UserMState)              // Save ONLY r0...
+        CLICK()                         // Read the click pos,
+        ST(r0, Click_State)             // save its code.
+        LD(UserMState, r0)              // restore r0, and
+		JMP(xp)                         // and return to the user.
+
+MouseH:
+        // The click is returned to R0 register 
+        LD(Click_State, r0)             // return click code in r0, or block
+        // check if no click was executed
+		ADDC(r0, 1, r0)                 // test if r0 is -1
+
+        BEQ(r0, I_Wait)                 // on 0, just wait a while
+
+        // once the click is here, so we fetch the coordinate  and put into r0
+        LD(Click_State, r0)             // Fetch coordinate to return
+
+        // Store in the R0 of the UserMState, so this program will receive the R0 coordinates
+        ST(r0, UserMState)              // return it in R0.
+
+        // Can return to normal state of -1 (no click) after the user program already received the the coordinates in the 
+        // UserMState
+		CMOVE(-1, r0)
+
+        // Clearing the click buffer using the -1
+        ST(r0, Click_State)             // Clear click buffer
+
+        // Return to user, and the user will do something with the click there
+        BR(I_Rtn)                       // and return to user.
 
 //////////////////////////////////////////////////////////////////////////////
 /// Handler for Illegal Instructions
@@ -133,11 +159,6 @@ I_IllOp:
         SAVESTATE()             // Save the machine state.
         LD(KStack, SP)          // Install kernel stack pointer.
 
-		// The next instruction to be executed would be the XP, we will go back there later
-		// But we first need to know what to do with the interrupt instruction
-		// It was saved in user mode space right?
-		// So lets just use the recipe to translate back to kernel mode
-		// because now we'll be in kernel mode to handle the exception
         SUBC(XP, 4, r0)         // u-mode address of illegal instruction
         CALL(MapUserAddress)    // convert to k-mode address
         LD(r0, 0, r0)           // Fetch the illegal instruction
@@ -149,7 +170,6 @@ I_IllOp:
 .macro UUO(ADR) LONG(ADR+PC_SUPERVISOR) // Auxiliary Macros
 .macro BAD()    UUO(UUOError)
 
-// we will always reach the SVC_UUO?
 UUOTbl: BAD()           UUO(SVC_UUO)    BAD()           BAD()
         BAD()           BAD()           BAD()           BAD()
         BAD()           BAD()           BAD()           BAD()
@@ -186,7 +206,7 @@ UUOError:
 // program.
 
 I_Rtn:  RESTORESTATE()
-kexit:  JMP(XP)                 // Good place for debugging!
+kexit:  JMP(XP)                 // Good place for debugging breakpoint!
 
 // Alternate return from interrupt handler which BACKS UP PC,
 // and calls the scheduler prior to returning.   This causes
@@ -206,7 +226,7 @@ SVC_UUO:
         SUBC(XP, 4, r0)         // u-mode address of illegal instruction
         CALL(MapUserAddress)    // convert to k-mode address
         LD(r0, 0, r0)           // The faulting instruction.
-        ANDC(r0, 0x7, r0)       // Pick out low bits,
+        ANDC(r0, 0xf, r0)       // Pick out low bits,
         SHLC(r0, 2, r0)         // make a word index,
         LD(r0, SVCTbl, r0)      // and fetch the table entry.
         JMP(r0)
@@ -219,12 +239,10 @@ SVCTbl: UUO(HaltH)              // SVC(0): User-mode HALT instruction
         UUO(WaitH)              // SVC(5): Wait(S), S in R0
         UUO(SignalH)            // SVC(6): Signal(S), S in R0
         UUO(YieldH)             // SVC(7): Yield()
-        UUO(ClickH)
+		UUO(MouseH)             // SVC(8): Mouse()
 
 /// Definitions of macros used to interface with Kernel code:
-// if you call this beautiful methods, they will act as a Supervisor Call
-// The Supervisor call in the table SVCTbl, ulala 
-// So will map there
+
 .macro Halt()   SVC(0)          // Stop a process.
 .macro WrMsg()  SVC(1)          // Write the 0-terminated msg following SVC
 .macro WrCh()   SVC(2)          // Write a character whose code is in R0
@@ -233,7 +251,7 @@ SVCTbl: UUO(HaltH)              // SVC(0): User-mode HALT instruction
 .macro Wait()   SVC(5)          // Wait operation on semaphore, number in R0
 .macro Signal() SVC(6)          // Signal operation on semaphore, number in R0
 .macro Yield()  SVC(7)          // Give up remaining quantum
-.macro Click() SVC(8)        // Supervisor call for the click
+.macro Mouse()  SVC(8)          // returns the coordinate information from the most recent mouse click
 
 ////////////////////////////////////////////////////////////////////////
 // Keyboard handling
@@ -288,30 +306,6 @@ HexPrtH:
         LD(UserMState, r0)              // Load user R0
         CALL(KHexPrt)                   // Print it out 
         BR(I_Rtn)                       // And return to user.
-		
-//////////////////////////////////////////////////////////////////////////////
-// CLICK Handler my chaps
-//////////////////////////////////////////////////////////////////////////////
-ClickH: 
-// from current UserMState, we can get the XP value
-// Because we must go back there
-	LD(UserMState+(4*30), r1)
-	MOVE(r1, r0)
-// Translate this user virtual address to a kernel memory location
-	CALL(MapUserAddress)
-// the kernel addres is in r0
-	
-
-LD(UserMState+(4*30), r1)       // Fetch interrupted XP, then
-        MOVE(r1, r0)
-        CALL(MapUserAddress)            // map to kernel-mode address        
-        MOVE(r0, r2)                    // save addr of start of message
-        CALL(KMsgAux)                   // print text following SVC.
-        SUB(r0, r2, r0)                 // number of bytes in message
-        ADD(r0, r1, r1)                 // adjust XP appropriately
-        ST(r1, UserMState+(4*30))       // Store updated XP.
-        BR(I_Rtn)
-
 
 //////////////////////////////////////////////////////////////////////////////
 /// Timesharing with round-robin scheduler
@@ -325,31 +319,21 @@ LD(UserMState+(4*30), r1)       // Fetch interrupted XP, then
 // The kernel variable CurProc always points to the ProcTbl entry
 //  corresponding to the "swapped in" process.
 
-// Where do the appropriate base and bound values come from? 
-// They are determined at assembly time. To enter code and data for a user-mode process,
-// use the .segment XXX directive to tell the assembler to start a new user-mode 
-// segment called XXX. Each user-mode segment has its own symbol table and is assumed 
-// to start at virtual address 0. Here's a very simple user-mode process that initializes a stack, 
-// then enters an infinite loop incrementing a counter in main memory:
-
 ProcTbl:
-		// 0 - 29 spaces (4 byte word always)
         STORAGE(30)             // Process 0: R0-R29
-		// 30 space ( 4 byte word)
         LONG(0)                 // Process 0: XP (= PC)
-		// 31
         LONG(P0_base)           // Process 0: base address
-		// 32
         LONG(P0_bounds)         // Process 0: bounds
 
-		// 0 - 29
         STORAGE(30)             // Process 1: R0-R29
-		// 30
         LONG(0)                 // Process 1: XP (= PC)
-		// 31
         LONG(P1_base)           // Process 1: base address
-		// 32
         LONG(P1_bounds)         // Process 1: bounds
+		
+		STORAGE(30)             // Process 2: R0-R29
+        LONG(0)                 // Process 2: XP (= PC)
+        LONG(P2_base)           // Process 2: base address
+        LONG(P2_bounds)         // Process 2: bounds
 
 CurProc: LONG(ProcTbl)
 
@@ -363,7 +347,6 @@ Scheduler:
         CALL(CopyMState)                // Copy UserMState -> CurProc
 
         LD(CurProc, r0)
-		
         ADDC(r0, 4*33, r0)              // Increment to next process..
         CMPLTC(r0,CurProc, r1)          // End of ProcTbl?
         BT(r1, Sched1)                  // Nope, its OK.
@@ -394,27 +377,14 @@ CopyMState:
 // to R0, simulating the effect of the base-and-bounds memory
 // management.  You DO NOT have to implement the check against
 // the BOUNDS value.
-
-// This procedure emulates in software what the MMU does in hardware: 
-// converting a user-mode virtual address to the corresponding physical address.
 MapUserAddress:
-		PUSH(R1) // use this register in the procedure
-		PUSH(R2)
-		LD(CurProc, r1) // load currentprocess state base register address into r1
-		
-		//debug sum
-		ADDC(r1, 31*4, r2)
-		LD(r1, 31*4, r1) // from him we can find seg_base (31th from r1)
-		// make the conversion adding the r0 user mode virtual space
-		// to the physical space kernel will use, with the add of seg_base + r0
-		ADD(r0, r1, r0) 
-		// return the r0
-		
-		// restore the r1 value after the procedure is run
-		POP(R2)
-		POP(R1)
-		.breakpoint
-        JMP(LP)                   // Return to the caller
+        // [Design Problem 1] your code here...
+		PUSH(r1)
+		LD(CurProc, r1)
+		LD(r1, 31*4, r1)
+		ADD(r0, r1, r0)  
+		POP(r1)
+        JMP(LP)    // return to caller
 
 //////////////////////////////////////////////////////////////////////////////
 /// Clock interrupt handler:  Invoke the scheduler.
@@ -468,7 +438,7 @@ YieldH: CALL(Scheduler)         // Schedule next process, and
 I_Reset:
         LD(ProcTbl + (30*4), XP)   // load initial PC for process 0
         CMOVE(P0_base, r0)      // set up P0 base and bounds
-        ST(r0, SEG_BASE)
+		ST(r0, SEG_BASE)
         CMOVE(P0_bounds, r0)
         ST(r0, SEG_BOUNDS)
         JMP(XP)                 // start execution in user mode
@@ -501,16 +471,88 @@ nSemaphores = (. - Semaphores)/4
 // semaphore value is 0, the WAIT operation cannot be completed at this
 // time, so branch to I_Wait.
 WaitH:
-        // [Design Problem 3] your code here...
-        BR(I_Rtn)               // temp: return to user for now
+        // Load the semaphore number from the user's R0 register
+		LD(UserMState, r0)
+        
+        // Check if the semaphore number (r0) is less than the number of semaphores
+        // CMPLTC sets r1 to 1 if r0 < nSemaphores, otherwise 0
+		CMPLTC(r0, nSemaphores, r1)
+        
+        // If r1 is 0 (i.e., the semaphore number is out of range), skip to WaitH_END
+		BEQ(r1, WaitH_END)
+        
+        // Check if the semaphore number is non-negative (r0 >= 0)
+        // CMPLE sets r1 to 1 if r0 >= 0, otherwise 0
+		CMPLE(r31, r0, r1)
+        
+        // If r1 is 0 (i.e., the semaphore number is negative), skip to WaitH_END
+		BEQ(r1, WaitH_END)
+        
+        // Multiply the semaphore number by 4 to get the correct memory offset
+		MULC(r0, 4, r1)
+        
+        // Load the current value of the semaphore from memory into r2
+		LD(r1, Semaphores, r2)
+        
+        // If the semaphore value is 0, branch to I_Wait (indicating that the process should wait)
+		BEQ(r2, I_Wait)
+        
+        // Reload the semaphore number from the user's R0 register (not strictly necessary but ensures consistency)
+		LD(UserMState, r0)
+        
+        // Recompute the memory offset for the semaphore
+		MULC(r0, 4, r1)
+        
+        // Load the current semaphore value again into r2
+		LD(r1, Semaphores, r2)
+        
+        // Decrement the semaphore value by 1
+		SUBC(r2, 1, r2)
+        
+        // Store the decremented value back into the semaphore memory location
+		ST(r2, Semaphores, r1)
+WaitH_END:
+        // Return to the user mode, resuming execution after the SVC
+        BR(I_Rtn)
+
 
 // Handler for Signal():  semaphore number is in ***user's*** r0.
 // First, check that number is >= 0 and < nSemaphores; return immediately
 // if number is out of range.  Otherwise, increment the value of the
 // specified semaphore and return to user mode.
 SignalH:
-        // [Design Problem 3] your code here
-        BR(I_Rtn)               // temp: return to user for now
+        // Load the semaphore number from the user's R0 register
+		LD(UserMState, r0)
+        
+        // Check if the semaphore number (r0) is less than the number of semaphores
+        // CMPLTC sets r1 to 1 if r0 < nSemaphores, otherwise 0
+		CMPLTC(r0, nSemaphores, r1)
+        
+        // If r1 is 0 (i.e., the semaphore number is out of range), skip to SignalH_END
+		BEQ(r1, SignalH_END)
+        
+        // Check if the semaphore number is non-negative (r0 >= 0)
+        // CMPLE sets r1 to 1 if r0 >= 0, otherwise 0
+		CMPLE(r31, r0, r1)
+        
+        // If r1 is 0 (i.e., the semaphore number is negative), skip to SignalH_END
+		BEQ(r1, SignalH_END)
+        
+        // Multiply the semaphore number by 4 to get the correct memory offset
+		MULC(r0, 4, r1)
+        
+        // Load the current value of the semaphore from memory into r2
+		LD(r1, Semaphores, r2)
+        
+        // Increment the semaphore value by 1
+		ADDC(r2, 1, r2)
+        
+        // Store the incremented value back into the semaphore memory location
+		ST(r2, Semaphores, r1)
+SignalH_END:
+        // Return to the user mode, resuming execution after the SVC
+        BR(I_Rtn)
+
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -580,7 +622,6 @@ KMsgAux:
 
         MOVE (R0, R1)
 
-// go fetching each character code, and send this signal to the display with the WRCHAR()	
 WrWord: LD (R1, 0, R2)          // Fetch a 4-byte word into R2
         ADDC (R1, 4, R1)        // Increment word pointer
         CMOVE(4,r3)             // Byte/word counter
@@ -591,7 +632,6 @@ WrByte: ANDC(r2, 0x7F, r0)      // Grab next byte -- LOW end first!
         SRAC(r2,8,r2)           // Shift out this byte
         SUBC(r3,1,r3)           // Count down... done with this word?
         BNE(r3,WrByte)          // Nope, continue.
-		
         BR(WrWord)              // Yup, on to next.
 
 WrEnd:
@@ -606,28 +646,43 @@ WrEnd:
 /// User-mode code: Process 0
 //////////////////////////////////////////////////////////////////////////////
 
-// Where do the appropriate base and bound values come from? 
-// They are determined at assembly time. To enter code and data for a user-mode process,
-// use the .segment XXX directive to tell the assembler to start a new user-mode 
-// segment called XXX. Each user-mode segment has its own symbol table and is assumed 
-// to start at virtual address 0. Here's a very simple user-mode process that initializes a stack, 
-// then enters an infinite loop incrementing a counter in main memory:
 .segment P0                     // start a new user-mode segment
 . = 0
         CMOVE(Stack, sp)
+		
+		PUSH(r0)
+		CMOVE(1, r0)
+		Signal()
+		POP(r0)
 
 Start:
-		
         WrMsg()
         .text "Start typing, Bunky.\n\n"
-
-Read:   WrMsg()                   // First a newline character, then
+		
+Read:   
+		PUSH(r0)
+		CMOVE(1, r0)              // wait on semaphore #1
+		Wait()
+		POP(r0)
+		
+		WrMsg()                   // First a newline character, then
         .text "\n> "
-
+		
         CMOVE(Line, r3)         // ...then read a line into buffer...
 
-RdCh:   GetKey()                // read next character,
-
+RdCh:   
+		PUSH(r0)
+		CMOVE(1, r0)
+		Signal()
+		POP(r0)
+		
+        GetKey()                  // read next character,
+		
+		PUSH(r0)
+		CMOVE(1, r0)              // wait on semaphore #1
+		Wait()
+		POP(r0)
+		
         WrCh()                  // echo back to user
         CALL(UCase)             // Convert it to upper case,
         ST(r0,0,r3)             // Store it in buffer.
@@ -679,13 +734,13 @@ Spc1:   WrMsg()                 // Add the "AY" suffix.
         CMPEQC(r3,0xA,r0)       // Was it end-of-line?
         BF(r0,Word)             // nope.
 
+		PUSH(r0)
+		CMOVE(1, r0)
+		Signal()
+		POP(r0)
+		
         BR(Read)                // ... and start another word.
 
-// SCII Background:
-// In the ASCII table:
-// Lowercase letters 'a' to 'z' have consecutive values from 97 to 122.
-// Uppercase letters 'A' to 'Z' have consecutive values from 65 to 90.
-// The difference between the lowercase and uppercase letters for any given letter is constant: 'a' - 'A' = 32.
 // Auxilliary routine: convert char in r0 to upper case:
 UCase:  PUSH(r1)
         CMPLEC(r0,'z',r1)       // Is it beyond 'z'?
@@ -721,26 +776,89 @@ Stack:  STORAGE(256)            // storage for stack
         CMOVE(Stack,SP)
 
 Start:
-		
-		// Load global value of Count?
         LD(Count, r0)          // Another quantum, incr count3.
-		// Increment it
         ADDC(r0,1,r0)
-		// Store back in its address
         ST(r0,Count)
 
         ANDC(r0,0xFFF,r1)      // print out message once every 4K iterations
         BNE(r1, Done)
         CMOVE(0xA,r0)          // message is count, followed by prompt
-        WrCh()                 // initial new line
+        
+		PUSH(r0)
+		CMOVE(1, r0)           // wait on semaphore #1
+		Wait()
+		POP(r0)
+		
+		WrMsg()
+		.text "\n"
+		
+		WrCh()                 // initial new line
         LD(Count, r0)
         HexPrt()               // print count
         WrMsg()                //  the remainder.
         .text "> "
-
+		
+		PUSH(r0)
+		CMOVE(1, r0)           // signal semaphore #1
+		Signal()
+		POP(r0)
+		
 Done:   Yield()                // Invoke scheduler
         BR(Start)              // return here after others run.
 
 Count: LONG(0)
 
 Stack: STORAGE(256)
+
+//////////////////////////////////////////////////////////////////////////////
+/// User-mode code: Process 2
+//////////////////////////////////////////////////////////////////////////////
+
+.segment P2                     // start a new user-mode segment
+. = 0
+        CMOVE(Stack, sp)
+		
+Start2:  
+        Mouse()                // read next mouse click,
+
+        // Load coordinates
+		LD(Const, r1)
+		AND(r0, r1, r1)
+
+        // get first part of coordinates
+        SHRC(r0, 16, r0)
+		
+        // Save r0 as will be used by semaphore?
+		PUSH(r0)
+		CMOVE(1, r0)              // wait on semaphore #1
+
+        // We need to wait while another process is consuming the screen
+
+        // Need to wait until really printing, some other process might be executing, 
+        // the other process has his quanta
+		Wait()
+
+		POP(r0)
+		
+        // Write the message in the screen handler
+		WrMsg()
+		.text "\n Click at x="
+        HexPrt()
+		
+		ADD(r1, r31, r0)
+		WrMsg()
+		.text ",y="
+		HexPrt() 
+		
+		PUSH(r0)
+		CMOVE(1, r0)     // signal semaphore #1
+
+        // We finally signal another process that the resource of the screen is available
+		Signal()
+		POP(r0)
+		
+        BR(Start2)              // ... and start another round.
+
+Const: LONG(0x0000ffff)
+
+Stack:  STORAGE(256)            // storage for stack
