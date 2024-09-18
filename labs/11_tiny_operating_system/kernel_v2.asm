@@ -300,6 +300,8 @@ ClickH:
 // Translate this user virtual address to a kernel memory location
 	CALL(MapUserAddress)
 // the kernel addres is in r0
+	ST(r1, UserMState+(4*30))
+	BR(I_Rtn)
 	
 
 LD(UserMState+(4*30), r1)       // Fetch interrupted XP, then
