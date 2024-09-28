@@ -1,7 +1,7 @@
 /* 
  * CS:APP Data Lab 
  * 
- * Vitor Pereira Barbosa - 8989658
+ * <Please put your name and userid here>
  * 
  * bits.c - Source file with your solutions to the Lab.
  *          This is the file you will hand in to your instructor.
@@ -160,10 +160,13 @@ int tmin(void) {
  *   Rating: 2
  */
 int isTmax(int x) {
-  int Tmin = x + 1;
-  int res = !(~Tmin ^ x);
+  int xplus1 = x + 1;
+  int Tmaxcase = !(~xplus1 ^ x);
 
-  return res;
+  // -1 case
+  int minusone = !!(xplus1);
+
+  return Tmaxcase & minusone;
 }
 /* 
  * allOddBits - return 1 if all odd-numbered bits in word set to 1
